@@ -1,11 +1,11 @@
 {
-	"id": "a-sample-plugin",
-	"name": "A Sample Plugin",
+	"id": "music-player",
+	"name": "Music Player",
 	"version": "1.0.0",
-	"minAppVersion": "1.11.5",
-	"description": "Demonstrates some of the capabilities of the Obsidian API.",
-	"author": "Obsidian",
+	"minAppVersion": "1.12.4",
+	"description": "在侧边栏播放 Obsidian 仓库中的本地音乐文件",
+	"author": "Kevin",
 	"authorUrl": "https://github.com/TracingOrigins",
-	"fundingUrl": "https://support.tracingorigins.top",
+	"fundingUrl": "https://support.TracingOrigins.top",
 	"isDesktopOnly": false
 }
