@@ -1,0 +1,135 @@
+/**
+ * 逐字时间歌词完整列表组件样式文件
+ * 
+ * 包含逐字时间歌词完整列表的所有样式，包括：
+ * - 歌词列表容器和滚动样式
+ * - 歌词行样式
+ * - 当前播放行高亮样式
+ * - 播放过的歌词行样式
+ * - 逐字字符样式
+ * - 卡拉OK 逐字高亮效果
+ * - 空状态样式
+ */
+
+/* ========== 逐字歌词列表容器 ========== */
+.music-player .lyrics-extended {
+	width: 100%;
+	height: 100%;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: flex-start;
+}
+
+.music-player .lyrics-extended-scroll {
+	overflow-y: auto;
+	overflow-x: hidden;
+	scroll-behavior: smooth;
+	width: 100%;
+	height: 100%;
+}
+
+.music-player .lyrics-extended-scroll::-webkit-scrollbar {
+	width: 4px;
+}
+
+.music-player .lyrics-extended-scroll::-webkit-scrollbar-thumb {
+	background: var(--text-faint);
+	border-radius: 2px;
+}
+
+.music-player .lyrics-extended-line {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 100%;
+	padding: 8px 0;
+	text-align: center;
+	transition: all 0.3s ease;
+	opacity: 0.5;
+}
+
+.music-player .lyrics-extended-line.is-active .lyrics-extended-text {
+	color: var(--interactive-accent);
+}
+
+.music-player .lyrics-extended-line.is-played .lyrics-extended-text {
+	color: var(--interactive-accent);
+}
+
+.music-player .lyrics-extended-line.is-playing {
+	opacity: 1;
+}
+
+.music-player .lyrics-extended-text {
+	cursor: pointer;
+	color: var(--text-normal);
+	transition: color 0.2s ease;
+	user-select: none;
+	display: inline-block;
+}
+
+.music-player .lyrics-extended-line.is-playing .lyrics-extended-text {
+	color: var(--interactive-accent);
+	font-size: 1.15em;
+	font-weight: 600;
+}
+
+.music-player .lyrics-extended-char {
+	display: inline-block;
+	position: relative;
+	line-height: inherit;
+}
+
+/* 背景文字（未填充部分） */
+.music-player .lyrics-extended-char-bg {
+	display: inline-block;
+	color: var(--text-normal);
+	opacity: 0.5;
+}
+
+/* 播放过的歌词和当前行的背景文字颜色 */
+.music-player .lyrics-extended-line.is-played .lyrics-extended-char-bg,
+.music-player .lyrics-extended-line.is-playing .lyrics-extended-char-bg {
+	color: var(--interactive-accent);
+	opacity: 0.5;
+}
+
+/* 填充文字（已填充部分，从左到右显示） */
+.music-player .lyrics-extended-char-fill {
+	position: absolute;
+	left: 0;
+	top: 0;
+	overflow: hidden;
+	color: var(--interactive-accent);
+	font-weight: 600;
+	white-space: nowrap;
+	line-height: inherit;
+	height: 100%;
+	width: 100%;
+	/* 使用 transform 代替 width 可以获得更好的性能 */
+	will-change: transform;
+	/* 使用 transform 可以获得硬件加速，性能更好 */
+	transform: scaleX(0);
+	transform-origin: left;
+	/* 减少 transition 时间，提高响应速度 */
+	transition: transform 0.03s linear;
+}
+
+.music-player .lyrics-extended-line.is-playing .lyrics-extended-char-fill {
+	font-weight: 700;
+}
+
+.music-player .lyrics-extended-empty {
+	width: 100%;
+	height: 100%;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+
+.music-player .lyrics-extended-empty-text {
+	color: var(--text-faint);
+	font-size: 0.9em;
+}
+

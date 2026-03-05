@@ -1,0 +1,44 @@
+/**
+ * 播放进度条组件样式文件
+ * 
+ * 包含播放进度条的所有样式，包括：
+ * - 进度条容器布局
+ * - 进度条填充动画
+ * - 时间显示样式
+ */
+
+/* ========== 进度条样式 ========== */
+.music-player .play-progress-container {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	margin: 0 auto 24px;
+	width: 100%;
+	max-width: 400px;
+}
+
+.music-player .play-progress-bar {
+	flex: 1;
+	height: 4px;
+	background: var(--background-modifier-border);
+	border-radius: 2px;
+	cursor: pointer;
+	position: relative;
+	overflow: hidden;
+}
+
+.music-player .play-progress-fill {
+	height: 100%;
+	background: var(--interactive-accent);
+	border-radius: 2px;
+	width: 0%;
+	transition: width 0.1s linear;
+}
+
+.music-player .play-time {
+	font-size: 12px;
+	color: var(--text-muted);
+	min-width: 40px;
+	text-align: center;
+	font-variant-numeric: tabular-nums;
+}

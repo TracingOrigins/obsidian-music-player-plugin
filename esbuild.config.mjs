@@ -84,7 +84,7 @@ async function buildCSS() {
 		fs.writeFileSync(cssDest, combinedCss);
 	}
 
-	console.log(`✓ CSS 已打包: ${cssDest}（共 ${cssFiles.length} 个文件）`);
+	// console.log(`✓ CSS 已打包: ${cssDest}（共 ${cssFiles.length} 个文件）`);
 }
 
 // 复制 manifest.json 到输出目录
@@ -167,31 +167,39 @@ const context = await esbuild.context({
 		'.ts': 'ts',
 		'.tsx': 'tsx',
 		'.json': 'json',
-		'.css': 'empty', // 忽略 CSS 导入，使用自定义的 buildCSS 函数生成 styles.css
+		'.css': 'empty', // 忽略 CSS 导入，因为我们使用自定义的 buildCSS 函数生成 styles.css
 	},
 	external: [
-		"obsidian",
-		"electron",
-		"@codemirror/autocomplete",
-		"@codemirror/collab",
-		"@codemirror/commands",
-		"@codemirror/language",
-		"@codemirror/lint",
-		"@codemirror/search",
-		"@codemirror/state",
-		"@codemirror/view",
-		"@lezer/common",
-		"@lezer/highlight",
-		"@lezer/lr",
-		...builtinModules],
-	format: "cjs",
-	target: "es2018",
+		'obsidian',
+		'electron',
+		'@codemirror/autocomplete',
+		'@codemirror/collab',
+		'@codemirror/commands',
+		'@codemirror/language',
+		'@codemirror/lint',
+		'@codemirror/search',
+		'@codemirror/state',
+		'@codemirror/view',
+		'@lezer/common',
+		'@lezer/highlight',
+		'@lezer/lr',
+		// 不把 process / string_decoder / buffer / events 作为外部依赖，这样像 music-metadata-browser
+		// 这类库中的 require('process/')、require('string_decoder/')、require('buffer') 和 require('events') 可以被正确打包
+		// 这些模块需要被打包以支持移动端
+		...builtinModules.filter((m) => m !== 'process' && m !== 'string_decoder' && m !== 'buffer' && m !== 'events')
+	],
+	format: 'cjs',
+	target: 'es2018',
 	logLevel: "info",
-	sourcemap: prod ? false : "inline",
+	sourcemap: prod ? false : 'inline',
 	treeShaking: true,
 	outdir: "dist",
+	// 生产模式下启用代码压缩
 	minify: prod,
+	// 生产模式下移除 console 和 debugger 语句
+	...(prod ? { drop: ['console', 'debugger'] } : {}),
 });
+
 
 // ==================== 主执行逻辑 ====================
 async function main() {
