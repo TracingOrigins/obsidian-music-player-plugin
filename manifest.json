@@ -1,0 +1,11 @@
+{
+	"id": "a-sample-plugin",
+	"name": "A Sample Plugin",
+	"version": "1.0.0",
+	"minAppVersion": "1.11.5",
+	"description": "Demonstrates some of the capabilities of the Obsidian API.",
+	"author": "Obsidian",
+	"authorUrl": "https://github.com/TracingOrigins",
+	"fundingUrl": "https://support.tracingorigins.top",
+	"isDesktopOnly": false
+}
