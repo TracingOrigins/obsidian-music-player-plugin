@@ -1,0 +1,78 @@
+/**
+ * 逐字时间歌词三行组件样式文件
+ * 
+ * 包含逐字时间歌词三行显示的所有样式，包括：
+ * - 逐字歌词文本样式
+ * - 逐字字符容器样式
+ * - 背景文字（未填充部分）样式
+ * - 填充文字（已填充部分）样式
+ * - 当前行高亮样式
+ * - 卡拉OK 逐字高亮效果
+ */
+
+/* ========== 逐字歌词文本样式 ========== */
+.music-player .lyrics-extended-triplet-text {
+	cursor: pointer;
+	color: var(--text-muted);
+	transition: color 0.2s ease;
+	user-select: none;
+	display: inline-block;
+	text-align: center;
+}
+
+.music-player .lyrics-extended-triplet-char {
+	display: inline-block;
+	position: relative;
+	line-height: inherit;
+}
+
+/* 背景文字（未填充部分） */
+.music-player .lyrics-extended-triplet-char-bg {
+	display: inline-block;
+	color: var(--text-muted);
+	opacity: 0.5;
+}	
+
+/* 填充文字（已填充部分，从左到右显示） */
+.music-player .lyrics-extended-triplet-char-fill {
+	position: absolute;
+	left: 0;
+	top: 0;
+	overflow: hidden;
+	color: var(--interactive-accent);
+	font-weight: 600;
+	white-space: nowrap;
+	line-height: inherit;
+	height: 100%;
+	width: 100%;
+	will-change: transform;
+	transform: scaleX(0);
+	transform-origin: left;
+	transition: transform 0.03s linear;
+}
+
+/* 当前行的填充文字加粗 */
+.music-player .lyric-line-current .lyrics-extended-triplet-char-fill {
+	font-weight: 700;
+}
+
+/* 当前行的背景文字颜色 */
+.music-player .lyric-line-current .lyrics-extended-triplet-char-bg {
+	color: var(--interactive-accent);
+	opacity: 0.5;
+}
+
+/* 上一行的文字颜色 */
+.music-player .lyric-line-prev .lyrics-extended-triplet-text {
+	color: var(--interactive-accent);
+	font-weight: 600;
+	opacity: 0.5;
+}
+
+/* 当前行的文字颜色和样式 */
+.music-player .lyric-line-current .lyrics-extended-triplet-text {
+	color: var(--interactive-accent);
+	font-weight: 600;
+	font-size: 1.15em;
+}
+

@@ -1,0 +1,21 @@
+/**
+ * 音乐播放器根组件样式文件
+ * 
+ * 包含根组件的所有样式，包括：
+ * - 主容器布局
+ * - 移动端适配样式
+ */
+
+/* ========== 主容器 ========== */
+.music-player-container {
+	display: flex;
+	flex-direction: column;
+	height: 100%;
+	padding: 0;
+	overflow: hidden;
+	position: relative;
+}
+
+.is-phone .music-player-container {
+	height: 750px;
+}

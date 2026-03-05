@@ -1,0 +1,178 @@
+/**
+ * 曲目操作组件样式文件
+ * 
+ * 包含曲目操作按钮的所有样式，包括：
+ * - 操作按钮容器布局
+ * - 添加到歌单按钮样式
+ * - 收藏按钮样式
+ * - 音量控制下拉菜单样式
+ * - 播放速度控制下拉菜单样式
+ * - 按钮悬停和激活状态
+ */
+
+/* ========== 操作按钮容器 ========== */
+.music-player .track-actions-container {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	gap: 12px;
+	margin: 0px auto 12px;
+	padding: 0 2px;
+	max-width: 400px;
+	width: 100%;
+}
+
+.music-player .track-actions-left {
+	display: flex;
+	align-items: center;
+	justify-content: flex-start;
+}
+
+.music-player .track-actions-right {
+	display: flex;
+	align-items: center;
+	justify-content: flex-end;
+}
+
+.music-player .track-action-btn {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 32px;
+	height: 32px;
+	border: none;
+	background: transparent !important;
+	border-radius: 50%;
+	cursor: pointer;
+	color: var(--icon-color);
+	transition: all 0.2s ease;
+	padding: 0;
+	position: relative;
+}
+
+.music-player .track-action-btn:hover {
+	color: var(--interactive-accent);
+	transform: scale(1.1);
+	background: transparent !important;
+}
+
+.music-player .track-action-btn:active {
+	background: transparent !important;
+}
+
+.music-player .track-action-btn.active {
+	color: var(--interactive-accent);
+	background: transparent !important;
+}
+
+.music-player .track-action-btn.active svg {
+	fill: var(--interactive-accent);
+}
+
+.music-player .track-action-btn.track-action-fav.active {
+	color: var(--interactive-accent);
+}
+
+.music-player .track-action-btn.track-action-fav.active svg {
+	fill: currentColor;
+}
+
+/* 心形按钮在收藏状态时使用主题色填充 */
+.music-player .track-action-btn.active svg[data-icon="heart"] {
+	fill: var(--interactive-accent);
+}
+
+.music-player .track-action-btn svg {
+	background: transparent !important;
+}
+
+.music-player .volume-control-wrapper {
+	position: relative;
+}
+
+.music-player .volume-menu-popup {
+	position: absolute;
+	bottom: 100%;
+	left: 50%;
+	transform: translateX(-50%);
+	margin-bottom: 8px;
+	background: var(--background-secondary);
+	border: 1px solid var(--background-modifier-border);
+	border-radius: 8px;
+	padding: 8px;
+	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+	min-width: 80px;
+	z-index: 100;
+}
+
+.music-player .volume-option {
+	padding: 6px 12px;
+	border: none;
+	background: transparent;
+	border-radius: 4px;
+	cursor: pointer;
+	color: var(--text-normal);
+	font-size: 12px;
+	text-align: center;
+	transition: all 0.2s ease;
+}
+
+.music-player .volume-option:hover {
+	background: var(--background-modifier-hover);
+	color: var(--interactive-accent);
+}
+
+.music-player .volume-option.active {
+	background: var(--interactive-accent);
+	color: var(--text-on-accent);
+	font-weight: 500;
+}
+
+.music-player .playback-rate-control-wrapper {
+	position: relative;
+}
+
+.music-player .playback-rate-menu-popup {
+	position: absolute;
+	bottom: 100%;
+	left: 50%;
+	transform: translateX(-50%);
+	margin-bottom: 8px;
+	background: var(--background-secondary);
+	border: 1px solid var(--background-modifier-border);
+	border-radius: 8px;
+	padding: 8px;
+	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+	min-width: 80px;
+	z-index: 100;
+}
+
+.music-player .playback-rate-option {
+	padding: 6px 12px;
+	border: none;
+	background: transparent;
+	border-radius: 4px;
+	cursor: pointer;
+	color: var(--text-normal);
+	font-size: 12px;
+	text-align: center;
+	transition: all 0.2s ease;
+}
+
+.music-player .playback-rate-option:hover {
+	background: var(--background-modifier-hover);
+	color: var(--interactive-accent);
+}
+
+.music-player .playback-rate-option.active {
+	background: var(--interactive-accent);
+	color: var(--text-on-accent);
+	font-weight: 500;
+}
+
