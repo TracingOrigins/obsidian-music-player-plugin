@@ -209,11 +209,11 @@ function getPluginDir(vaultPath, pluginId) {
 // ==================== 插件目录处理 ====================
 
 /**
- * 备份已有插件目录中的 data.json。
+ * 同步插件目录与 dist 中的 data.json。
  * - 仅当插件目录存在且为目录时生效。
- * - 如果目录下存在 data.json，则复制到 dist 目录内，避免重新部署时丢失用户配置。
- * @param vaultPath Vault 根路径
- * @param pluginId 插件 ID
+ * - 若插件目录存在 data.json，则复制到 dist（调用方需已保证 dist 存在），避免重新部署时丢失用户配置。同步失败时，会打印错误并退出。
+ * - 若插件目录不存在 data.json，则删除 dist 中的 data.json（若存在），避免沿用旧配置。同步失败时，会打印错误并退出。
+ * @param pluginDir 插件目录绝对路径
  */
 function backupDataJson(pluginDir) {
 	// 不存在或不是文件夹则直接跳过
@@ -221,12 +221,19 @@ function backupDataJson(pluginDir) {
 	const stats = fs.lstatSync(pluginDir);
 	if (!stats.isDirectory()) return;
 
-	// 仅在存在 data.json 时才进行复制
 	const dataJsonPath = path.join(pluginDir, 'data.json');
-	if (!fs.existsSync(dataJsonPath)) return;
-
-	// 复制 data.json 到 dist 目录
 	const distDataJsonPath = path.join(distDir, 'data.json');
+
+	// 若插件目录不存在 data.json，则删除 dist 中的 data.json（若存在），避免沿用旧配置
+	if (!fs.existsSync(dataJsonPath)) {
+		try {
+			fs.rmSync(distDataJsonPath, { force: true });
+		} catch (err) {
+			log.warn(`无法删除 dist 中的 data.json: ${err?.message ?? err}`);
+		}
+		return;
+	}
+
 	fs.copyFileSync(dataJsonPath, distDataJsonPath);
 }
 
