@@ -2,7 +2,7 @@
  * 逐字时间歌词解析器模块
  * 
  * 提供逐字时间歌词解析功能，支持：
- * - 解析包含逐字时间标签的歌词文件（LYRICS_EXTENDED）
+ * - 解析包含逐字时间标签的歌词（LYRICS 标签内嵌的卡拉 OK 文本）
  * - 解析格式：<mm:ss.xx>字 或 [mm:ss.xx]字
  * - 用于实现卡拉OK逐字高亮效果
  * 
@@ -34,6 +34,11 @@ export interface ExtendedLyricLine {
 	chars: ExtendedLyricChar[];
 	/** 该行的纯文本（用于显示） */
 	text: string;
+	/**
+	 * 本行歌词中出现的所有时间戳（行首 + 每个逐字标签），升序去重。
+	 * 用于计算每个字/词的高亮结束时间：取严格大于该字开始时间的下一个时间戳。
+	 */
+	lineTimeStamps: readonly number[];
 }
 
 /**
@@ -73,6 +78,17 @@ export class LyricsExtendedParser {
 		// 匹配逐字时间标签的正则表达式：<mm:ss.xx> 或 [mm:ss.xx]
 		const charTimeRegex = /[<[](\d{2}):(\d{2})\.(\d{2})[>\]]/g;
 
+		const parseTagToSeconds = (m: RegExpMatchArray): number | null => {
+			const minutesStr = m[1];
+			const secondsStr = m[2];
+			const hundredthsStr = m[3];
+			if (!minutesStr || !secondsStr || !hundredthsStr) return null;
+			const minutes = parseInt(minutesStr);
+			const seconds = parseInt(secondsStr);
+			const hundredths = parseInt(hundredthsStr);
+			return minutes * 60 + seconds + hundredths / 100;
+		};
+
 		textLines.forEach((line) => {
 			if (!line.trim()) return;
 
@@ -96,48 +112,45 @@ export class LyricsExtendedParser {
 			// 移除行时间标签，只保留逐字时间标签和文本
 			let processedLine = line.replace(lineTimeRegex, "");
 
+			const stampSet = new Set<number>();
+			if (lineTime > 0) {
+				stampSet.add(lineTime);
+			}
+
 			// 解析逐字时间标签
 			const chars: ExtendedLyricChar[] = [];
 			const matches = [...processedLine.matchAll(charTimeRegex)];
-			
+			for (const m of matches) {
+				const t = parseTagToSeconds(m);
+				if (t !== null) stampSet.add(t);
+			}
+
 			if (matches.length === 0) {
-				// 如果没有逐字时间标签，将整行文本作为单个字符组
-				const cleanText = processedLine.trim();
-				if (cleanText) {
-					cleanText.split("").forEach((char) => {
-						if (char.trim()) {
-							chars.push({ char, time: lineTime });
-						}
-					});
+				// 如果没有逐字时间标签，将整行文本作为单个字符组（不 trim 行内容，保留空格）
+				if (processedLine.trim().length > 0) {
+					for (const char of processedLine) {
+						chars.push({ char, time: lineTime });
+					}
 				}
 			} else {
 				// 有逐字时间标签，解析每个字符的时间
 				let lastIndex = 0;
 				let lastTime = lineTime;
 
-				matches.forEach((match, index) => {
-					// 解析时间标签中的时间
-					const minutesStr = match[1];
-					const secondsStr = match[2];
-					const hundredthsStr = match[3];
-					if (!minutesStr || !secondsStr || !hundredthsStr) {
-						return; // 跳过无效的匹配
+				matches.forEach((match) => {
+					const time = parseTagToSeconds(match);
+					if (time === null) {
+						return;
 					}
-					const minutes = parseInt(minutesStr);
-					const seconds = parseInt(secondsStr);
-					const hundredths = parseInt(hundredthsStr);
-					const time = minutes * 60 + seconds + hundredths / 100;
 
 					// 获取当前时间标签之前的文本
 					const matchIndex = match.index ?? 0;
 					const beforeText = processedLine.substring(lastIndex, matchIndex);
-					
+
 					// 将文本分割为字符，每个字符都关联上一个时间标签的时间
-					beforeText.split("").forEach((char) => {
-						if (char.trim()) {
-							chars.push({ char, time: lastTime });
-						}
-					});
+					for (const char of beforeText) {
+						chars.push({ char, time: lastTime });
+					}
 
 					// 更新索引和时间
 					const matchLength = match[0]?.length ?? 0;
@@ -147,18 +160,18 @@ export class LyricsExtendedParser {
 
 				// 处理最后一个时间标签之后的文本
 				const remainingText = processedLine.substring(lastIndex);
-				remainingText.split("").forEach((char) => {
-					if (char.trim()) {
-						chars.push({ char, time: lastTime });
-					}
-				});
+				for (const char of remainingText) {
+					chars.push({ char, time: lastTime });
+				}
 			}
+
+			const lineTimeStamps = [...stampSet].sort((a, b) => a - b);
 
 			// 如果解析出字符，添加到结果中
 			if (chars.length > 0) {
 				// 生成纯文本（移除所有时间标签）
-				const text = chars.map(c => c.char).join("");
-				
+				const text = chars.map((c) => c.char).join("");
+
 				// 如果没有行时间，使用第一个字符的时间作为行时间
 				const finalLineTime = lineTime > 0 ? lineTime : (chars[0]?.time || 0);
 
@@ -166,6 +179,7 @@ export class LyricsExtendedParser {
 					time: finalLineTime,
 					chars,
 					text,
+					lineTimeStamps,
 				});
 			}
 		});
@@ -186,7 +200,7 @@ export class LyricsExtendedParser {
 			.replace(/\[\d+:\d+\]/g, "") // 移除 [mm:ss] 格式的时间标签
 			.replace(/<\d+:\d+\.\d+>/g, "") // 移除 <mm:ss.xx> 格式的时间标签
 			.replace(/<\d+:\d+>/g, "") // 移除 <mm:ss> 格式的时间标签
-			.trim(); // 去除首尾空白
+			.trimEnd();
 	}
 }
 

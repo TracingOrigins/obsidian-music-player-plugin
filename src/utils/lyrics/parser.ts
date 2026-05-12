@@ -75,11 +75,9 @@ export class LyricsParser {
 					// 转换为秒数
 					const time = minutes * 60 + seconds + hundredths / 100;
 
-					// 提取歌词文本（移除所有时间标签，但保留其他时间标签用于卡拉OK效果）
-					const text = line.replace(/\[(\d{2}):(\d{2})\.(\d{2})\]/g, "").trim();
-
-					// 如果文本不为空，添加到歌词数组
-					if (text) {
+					// 提取歌词文本（移除行首时间标签；不 trim，以保留英文词间空格与行内前导空格）
+					const text = line.replace(/\[(\d{2}):(\d{2})\.(\d{2})\]/g, "");
+					if (text.trim().length > 0) {
 						lyrics.push({
 							time: time,
 							text: text,
@@ -117,7 +115,7 @@ export class LyricsParser {
 			.replace(/<\d+:\d+\.\d+>/g, "") // 移除 <mm:ss.xx> 格式的时间标签
 			.replace(/<\d+:\d+>/g, "") // 移除 <mm:ss> 格式的时间标签
 			.replace(/<.*?>/g, "") // 移除任何其他尖括号内的内容
-			.trim(); // 去除首尾空白
+			.trimEnd(); // 仅去掉行尾空白，保留行首空格
 	}
 
 	/**
@@ -186,12 +184,9 @@ export class LyricsParser {
 			const matchIndex = match.index ?? 0;
 			const beforeText = text.substring(lastIndex, matchIndex);
 			// 将文本分割为字符，每个字符都关联上一个时间标签的时间
-			beforeText.split("").forEach((char) => {
-				// 只处理非空白字符
-				if (char.trim()) {
-					chars.push({ char, time: lastTime });
-				}
-			});
+			for (const char of beforeText) {
+				chars.push({ char, time: lastTime });
+			}
 
 			// 更新索引和时间，为下一段文本做准备
 			lastIndex = matchIndex + (match[0]?.length ?? 0);
@@ -200,12 +195,9 @@ export class LyricsParser {
 
 		// 处理最后一个时间标签之后的文本
 		const remainingText = text.substring(lastIndex);
-		remainingText.split("").forEach((char) => {
-			// 只处理非空白字符，使用最后一个时间标签的时间
-			if (char.trim()) {
-				chars.push({ char, time: lastTime });
-			}
-		});
+		for (const char of remainingText) {
+			chars.push({ char, time: lastTime });
+		}
 
 		return chars;
 	}

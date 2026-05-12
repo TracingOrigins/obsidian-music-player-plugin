@@ -20,46 +20,78 @@
 	text-align: center;
 }
 
+/* 保留英文词间空格与连续空格 */
+.music-player .lyrics-extended-triplet-plain,
+.music-player .lyrics-extended-triplet-karaoke {
+	white-space: pre-wrap;
+	word-break: break-word;
+}
+
+/* 中英文统一字格：略增字距，拉丁与汉字节奏接近 */
+.music-player .lyrics-extended-triplet-karaoke {
+	letter-spacing: 0.04em;
+}
+
 .music-player .lyrics-extended-triplet-char {
 	display: inline-block;
 	position: relative;
+	vertical-align: baseline;
 	line-height: inherit;
+	padding: 0 0.06em;
+	box-sizing: content-box;
 }
 
-/* 背景文字（未填充部分） */
+.music-player .lyrics-extended-triplet-char.is-ws {
+	min-width: 0.35em;
+}
+
+/* 背景层（未唱到部分） */
 .music-player .lyrics-extended-triplet-char-bg {
 	display: inline-block;
+	position: relative;
+	z-index: 0;
 	color: var(--text-muted);
 	opacity: 0.5;
-}	
+	font-weight: 600;
+}
 
-/* 填充文字（已填充部分，从左到右显示） */
+/* 从左向右揭示：用宽度裁剪，避免 scaleX 横向拉伸字形 */
+.music-player .lyrics-extended-triplet-char-fill-clip {
+	position: absolute;
+	left: 0;
+	top: 0;
+	bottom: 0;
+	overflow: hidden;
+	max-width: 100%;
+	z-index: 1;
+	pointer-events: none;
+	will-change: width;
+}
+
 .music-player .lyrics-extended-triplet-char-fill {
 	position: absolute;
 	left: 0;
 	top: 0;
-	overflow: hidden;
-	color: var(--interactive-accent);
-	font-weight: 600;
+	display: inline-block;
 	white-space: nowrap;
 	line-height: inherit;
-	height: 100%;
-	width: 100%;
-	will-change: transform;
-	transform: scaleX(0);
-	transform-origin: left;
-	transition: transform 0.03s linear;
-}
-
-/* 当前行的填充文字加粗 */
-.music-player .lyric-line-current .lyrics-extended-triplet-char-fill {
-	font-weight: 700;
-}
-
-/* 当前行的背景文字颜色 */
-.music-player .lyric-line-current .lyrics-extended-triplet-char-bg {
 	color: var(--interactive-accent);
-	opacity: 0.5;
+	font-weight: 600;
+}
+
+/* 当前行：背景与填充层同一字重，保证叠字宽度一致 */
+.music-player .lyric-line-current .lyrics-extended-triplet-char-bg,
+.music-player .lyric-line-current .lyrics-extended-triplet-char-fill {
+	color: var(--interactive-accent);
+	font-weight: 600;
+}
+
+.music-player .lyric-line-current .lyrics-extended-triplet-char-bg {
+	opacity: 0.45;
+}
+
+.music-player .lyric-line-current .lyrics-extended-triplet-char-fill {
+	opacity: 1;
 }
 
 /* 上一行的文字颜色 */
@@ -74,5 +106,11 @@
 	color: var(--interactive-accent);
 	font-weight: 600;
 	font-size: 1.15em;
+}
+
+/* 英文整词一格：取消字距拉伸，略增词左右留白 */
+.music-player .lyrics-extended-triplet-char.is-word-unit {
+	letter-spacing: normal;
+	padding: 0 0.1em;
 }
 

@@ -14,7 +14,7 @@ import type { ExtendedLyricLine } from "@/utils/lyrics/extendedParser";
 export interface LyricsIndexCalculatorOptions {
 	/** 普通歌词列表（LRC 格式） */
 	fullLyrics: LyricLine[];
-	/** 逐字时间歌词列表（LYRICS_EXTENDED 格式） */
+	/** 逐字时间歌词列表（与 LYRICS 内嵌卡拉 OK 格式解析结果一致） */
 	fullExtendedLyrics: ExtendedLyricLine[];
 	/** 当前播放时间（秒） */
 	currentTime: number;
