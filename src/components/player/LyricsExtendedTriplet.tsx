@@ -8,24 +8,8 @@
 import React from "react";
 import "./LyricsExtendedTriplet.css";
 import type { ExtendedLyricLine } from "@/utils/lyrics/extendedParser";
-
-/**
- * 计算字符填充进度的辅助函数
- * 
- * 根据当前播放时间和字符的时间范围，计算字符的填充进度（0-1）。
- * 
- * @param currentTime 当前播放时间（秒）
- * @param charTime 字符开始时间（秒）
- * @param charEndTime 字符结束时间（秒）
- * @returns 返回填充进度（0-1）
- */
-function calculateCharProgress(currentTime: number, charTime: number, charEndTime: number): number {
-	if (currentTime >= charEndTime) return 1;
-	if (currentTime <= charTime) return 0;
-	const charDuration = charEndTime - charTime;
-	const elapsed = currentTime - charTime;
-	return Math.min(elapsed / charDuration, 1);
-}
+import { linearFillProgress } from "@/utils/lyrics/charFillProgress";
+import { buildKaraokeUnits } from "@/utils/lyrics/karaokeUnits";
 
 /**
  * 逐字时间歌词三行组件的属性接口
@@ -55,41 +39,42 @@ const LineComponent = React.memo(({ line, currentTime, isCurrent }: LineComponen
 		return <span className="lyric-text"></span>;
 	}
 
-	// 预计算字符的结束时间和文本
-	const charsData = React.useMemo(() => {
-		return line.chars.map((charData, charIndex) => {
-			const nextChar = line.chars[charIndex + 1];
-			const charEndTime = nextChar ? nextChar.time : (charData.time + 0.1);
-			return { char: charData.char, charTime: charData.time, charEndTime };
-		});
-	}, [line.chars]);
+	const unitsData = React.useMemo(() => {
+		if (!isCurrent || !line.chars.length) return [];
+		return buildKaraokeUnits(line.chars, line);
+	}, [line, isCurrent]);
 
 	// 对于非当前行，显示完整文字（不需要逐字效果）
 	if (!isCurrent) {
 		return (
-			<span className="lyrics-extended-triplet-text">
+			<span className="lyrics-extended-triplet-text lyrics-extended-triplet-plain">
 				{line.text}
 			</span>
 		);
 	}
 
-	// 当前行需要逐字显示效果
+	// 当前行：从左向右揭示高亮（clip + width，避免 scaleX 拉伸拉丁字母）
 	return (
-		<div className="lyrics-extended-triplet-text">
-			{charsData.map(({ char, charTime, charEndTime }, charIndex) => {
-				const fillProgress = calculateCharProgress(currentTime, charTime, charEndTime);
+		<div className="lyrics-extended-triplet-text lyrics-extended-triplet-karaoke">
+			{unitsData.map(({ text, charTime, charEndTime }, unitIndex) => {
+				const fillProgress = linearFillProgress(currentTime, charTime, charEndTime);
+				const isWs = text.length === 1 && /\s/.test(text);
+				const isWordUnit =
+					!isWs && text.length > 1 && /^[A-Za-z0-9'-]+$/.test(text);
 
 				return (
-					<span key={charIndex} className="lyrics-extended-triplet-char">
-						<span className="lyrics-extended-triplet-char-bg">{char}</span>
-						<span 
-							className="lyrics-extended-triplet-char-fill"
-							style={{
-								transform: `scaleX(${fillProgress})`,
-								transformOrigin: 'left',
-							}}
+					<span
+						key={unitIndex}
+						className={`lyrics-extended-triplet-char${isWs ? " is-ws" : ""}${
+							isWordUnit ? " is-word-unit" : ""
+						}`}
+					>
+						<span className="lyrics-extended-triplet-char-bg">{text}</span>
+						<span
+							className="lyrics-extended-triplet-char-fill-clip"
+							style={{ width: `${fillProgress * 100}%` }}
 						>
-							{char}
+							<span className="lyrics-extended-triplet-char-fill">{text}</span>
 						</span>
 					</span>
 				);
@@ -97,10 +82,8 @@ const LineComponent = React.memo(({ line, currentTime, isCurrent }: LineComponen
 		</div>
 	);
 }, (prevProps, nextProps) => {
-	// 优化：只在关键属性变化时重新渲染
 	if (prevProps.line !== nextProps.line) return false;
 	if (prevProps.isCurrent !== nextProps.isCurrent) return false;
-	// 对于当前行，currentTime 的变化需要重新渲染
 	if (prevProps.isCurrent && prevProps.currentTime !== nextProps.currentTime) return false;
 	return true;
 });

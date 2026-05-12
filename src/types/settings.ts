@@ -15,10 +15,8 @@ export interface TrackInfo {
 	artist: string;
 	/** 专辑名称 */
 	album: string;
-	/** 歌词文本（LRC格式） */
+	/** 歌词原文（与文件内 LYRICS 标签一致；可为逐句 LRC 或逐字卡拉 OK 文本，由解析器自动识别） */
 	lyrics?: string;
-	/** 逐字时间歌词文本（LYRICS_EXTENDED标签） */
-	lyricsExtended?: string;
 	/** 发行年份 */
 	year?: number;
 	/** 流派 */

@@ -3,11 +3,11 @@
  * 
  * 从音频文件的二进制数据中提取嵌入的元数据信息，包括：
  * - 封面图片
- * - 歌词文本（从音频文件的元数据标签中提取，支持多种格式）
+ * - 歌词文本（与 music-metadata 一致：优先 **common.lyrics**，否则从原生标签中宽泛匹配 USLT/SYLT/LYRICS 等）
  * - 歌曲基本信息（标题、艺术家、专辑等）
  * - 音轨号和时长等
  * 
- * 注意：歌词只从音频文件的元数据标签中提取，不从外部文件读取。
+ * 注意：歌词从音频内嵌标签读取；优先使用库解析后的 common.lyrics，与最初实现一致。
  */
 
 // 为移动端提供 Buffer polyfill
@@ -58,6 +58,15 @@ function extractTextFromNativeTags(
 			if (typeof value === "string" && isMatched) {
 				return value;
 			}
+			// 格式1b：字符串数组（部分 Vorbis / APE 标签）
+			else if (
+				Array.isArray(value) &&
+				isMatched &&
+				value.length > 0 &&
+				value.every((item: unknown) => typeof item === "string")
+			) {
+				return value.join("\n");
+			}
 			// 格式2：对象中包含 text 属性（字符串）
 			else if (value && typeof value.text === "string" && (isMatched || (descriptionMatcher && descriptionMatcher(value.description || "")))) {
 				return value.text;
@@ -65,6 +74,50 @@ function extractTextFromNativeTags(
 			// 格式3：对象中包含 text 属性（数组）
 			else if (value && Array.isArray(value.text) && (isMatched || (descriptionMatcher && descriptionMatcher(value.description || "")))) {
 				return value.text.join("\n");
+			}
+		}
+	}
+
+	return undefined;
+}
+
+/**
+ * 提取内嵌歌词（与 music-metadata 最初推荐用法一致）：
+ * 1. `common.lyrics`（库已归并多来源，含 M4A、部分 MP3）
+ * 2. 原生标签：id 含 lyrics、或 USLT / SYLT；TXXX 等配合 description 含 lyrics
+ * 3. 再遍历原生标签，读取 USLT 的 `value.text`
+ */
+function extractLyricsFromMetadata(metadata: IAudioMetadata): string | undefined {
+	const common = metadata.common.lyrics;
+	if (common && Array.isArray(common) && common.length > 0) {
+		const joined = common.join("\n");
+		if (joined.trim()) return joined;
+	}
+
+	const extractedLyrics = extractTextFromNativeTags(
+		metadata.native,
+		(id, upperId) => {
+			const isLyricsId = /lyrics/i.test(id);
+			const isStandardLyrics = upperId === "USLT" || upperId === "SYLT";
+			return isLyricsId || isStandardLyrics;
+		},
+		(desc) => /lyrics/i.test(desc)
+	);
+	if (extractedLyrics?.trim()) {
+		return extractedLyrics;
+	}
+
+	const native = metadata.native;
+	if (native) {
+		for (const format of Object.keys(native)) {
+			const nativeTags = native[format] || [];
+			for (const tag of nativeTags) {
+				const id = String(tag.id || "").toUpperCase();
+				const value: unknown = tag.value;
+				if (id === "USLT" && value && typeof (value as { text?: string }).text === "string") {
+					const t = (value as { text: string }).text;
+					if (t.trim()) return t;
+				}
 			}
 		}
 	}
@@ -81,8 +134,6 @@ export interface EmbeddedAudioMetadata {
 	coverDataUrl?: string;
 	/** 歌词文本内容 */
 	lyricsText?: string;
-	/** 逐字时间歌词文本内容（LYRICS_EXTENDED 标签） */
-	lyricsExtended?: string;
 	/** 歌曲标题 */
 	title?: string;
 	/** 艺术家名称 */
@@ -150,7 +201,7 @@ export async function readAudioFileBinary(
  * 
  * 使用 music-metadata-browser 库解析音频文件，提取：
  * 1. 封面图片：转换为 Blob URL
- * 2. 歌词：支持多种格式（common.lyrics、USLT、SYLT、foobar2000 的 LYRICS 等）
+ * 2. 歌词：优先 **common.lyrics**，否则从原生标签匹配（与 music-metadata 最初用法一致）
  * 3. 基本信息：标题、艺术家、专辑、年份、流派、音轨号、时长等
  * 
  * @param buffer 音频文件的二进制数据（ArrayBuffer）
@@ -207,64 +258,10 @@ export async function getEmbeddedAudioMetadataFromBuffer(
 			result.coverDataUrl = `data:${mimeType};base64,${base64}`;
 		}
 
-		// 提取歌词文本（从音频文件的元数据标签中提取）
-		// 歌词可能存储在多个位置：
-		// 1. metadata.common.lyrics（通用歌词字段）
-		// 2. metadata.native 中的各种格式特定标签（USLT、SYLT、LYRICS 等）
-		// 注意：只从音频文件的元数据标签中提取，不从外部 .lrc 文件读取
-		let lyrics = "";
-		// 首先尝试从通用歌词字段获取
-		if (metadata.common.lyrics && metadata.common.lyrics.length) {
-			lyrics = metadata.common.lyrics.join("\n");
-		} else {
-			// 如果通用字段没有，则从原生标签中查找
-			// 先尝试使用辅助函数提取
-			const extractedLyrics = extractTextFromNativeTags(
-				metadata.native,
-				(id, upperId) => {
-					// 检查是否是歌词相关的标签（如 foobar2000 使用的 LYRICS、TXXX:LYRICS 等）
-					const isLyricsId = /lyrics/i.test(id);
-					// 处理标准 ID3 歌词帧：USLT（未同步歌词）或 SYLT（同步歌词）
-					const isStandardLyrics = upperId === "USLT" || upperId === "SYLT";
-					return isLyricsId || isStandardLyrics;
-				},
-				(desc) => /lyrics/i.test(desc)
-			);
-			if (extractedLyrics) {
-				lyrics = extractedLyrics;
-			} else if (metadata.native) {
-				// 特殊处理：USLT 帧可能包含在对象的 text 属性中
-				for (const format of Object.keys(metadata.native)) {
-					const nativeTags = metadata.native[format] || [];
-					for (const tag of nativeTags) {
-						const id = String(tag.id || "").toUpperCase();
-						const value: any = tag.value;
-						if (id === "USLT" && value && typeof value.text === "string") {
-							lyrics = value.text;
-							break;
-						}
-					}
-					if (lyrics) break;
-				}
-			}
-		}
-		// 如果找到歌词，添加到结果中
-		if (lyrics) {
-			result.lyricsText = lyrics;
-		}
-
-		// 提取逐字时间歌词（LYRICS_EXTENDED 标签）
-		const lyricsExtended = extractTextFromNativeTags(
-			metadata.native,
-			(id, upperId) => {
-				// 检查是否是 LYRICS_EXTENDED 标签
-				return /lyrics_extended/i.test(id) || upperId === "LYRICS_EXTENDED";
-			},
-			(desc) => /lyrics_extended/i.test(desc)
-		);
-		// 如果找到逐字歌词，添加到结果中
-		if (lyricsExtended) {
-			result.lyricsExtended = lyricsExtended;
+		// 歌词：common.lyrics → 原生宽泛匹配 → USLT 兜底（与最初实现一致）
+		const lyricsText = extractLyricsFromMetadata(metadata);
+		if (lyricsText?.trim()) {
+			result.lyricsText = lyricsText;
 		}
 
 		// 提取基本元数据信息

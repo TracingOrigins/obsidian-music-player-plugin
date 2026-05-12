@@ -11,24 +11,8 @@
 import React from "react";
 import "./LyricsExtendedFull.css";
 import type { ExtendedLyricLine } from "@/utils/lyrics/extendedParser";
-
-/**
- * 计算字符填充进度的辅助函数
- * 
- * 根据当前播放时间和字符的时间范围，计算字符的填充进度（0-1）。
- * 
- * @param currentTime 当前播放时间（秒）
- * @param charTime 字符开始时间（秒）
- * @param charEndTime 字符结束时间（秒）
- * @returns 返回填充进度（0-1）
- */
-function calculateCharProgress(currentTime: number, charTime: number, charEndTime: number): number {
-	if (currentTime >= charEndTime) return 1;
-	if (currentTime <= charTime) return 0;
-	const charDuration = charEndTime - charTime;
-	const elapsed = currentTime - charTime;
-	return Math.min(elapsed / charDuration, 1);
-}
+import { linearFillProgress } from "@/utils/lyrics/charFillProgress";
+import { buildKaraokeUnits } from "@/utils/lyrics/karaokeUnits";
 
 /**
  * 逐字时间歌词完整列表组件的属性接口
@@ -67,14 +51,7 @@ interface LineProps {
 }
 
 const LineComponent = React.memo(({ line, index, currentTime, isActive, isPlaying, playingIndex, onSeek, lineRef }: LineProps) => {
-	// 预计算字符的结束时间和文本，避免在渲染时重复计算
-	const charsData = React.useMemo(() => {
-		return line.chars.map((charData, charIndex) => {
-			const nextChar = line.chars[charIndex + 1];
-			const charEndTime = nextChar ? nextChar.time : (charData.time + 0.1);
-			return { char: charData.char, charTime: charData.time, charEndTime };
-		});
-	}, [line.chars]);
+	const unitsData = React.useMemo(() => buildKaraokeUnits(line.chars, line), [line]);
 
 	// 计算每个字符的进度，只在当前行激活时计算
 	const shouldCalculateProgress = isActive || isPlaying;
@@ -96,27 +73,31 @@ const LineComponent = React.memo(({ line, index, currentTime, isActive, isPlayin
 					}
 				}}
 			>
-				{charsData.map(({ char, charTime, charEndTime }, charIndex) => {
-					// 对于播放过的歌词，所有字符都应该完全填充（显示完整高亮）
-					// 对于当前行，计算逐字进度
-					// 对于其他行，如果时间已过则填充，否则不填充
-					const fillProgress = isPlayed 
-						? 1 
-						: (shouldCalculateProgress 
-							? calculateCharProgress(currentTime, charTime, charEndTime)
-							: (currentTime >= charEndTime ? 1 : 0));
+				{unitsData.map(({ text, charTime, charEndTime }, unitIndex) => {
+					const fillProgress = isPlayed
+						? 1
+						: shouldCalculateProgress
+							? linearFillProgress(currentTime, charTime, charEndTime)
+							: currentTime >= charEndTime
+								? 1
+								: 0;
+					const isWs = text.length === 1 && /\s/.test(text);
+					const isWordUnit =
+						!isWs && text.length > 1 && /^[A-Za-z0-9'-]+$/.test(text);
 
 					return (
-						<span key={charIndex} className="lyrics-extended-char">
-							<span className="lyrics-extended-char-bg">{char}</span>
-							<span 
-								className="lyrics-extended-char-fill"
-								style={{
-									transform: `scaleX(${fillProgress})`,
-									transformOrigin: 'left',
-								}}
+						<span
+							key={unitIndex}
+							className={`lyrics-extended-char${isWs ? " is-ws" : ""}${
+								isWordUnit ? " is-word-unit" : ""
+							}`}
+						>
+							<span className="lyrics-extended-char-bg">{text}</span>
+							<span
+								className="lyrics-extended-char-fill-clip"
+								style={{ width: `${fillProgress * 100}%` }}
 							>
-								{char}
+								<span className="lyrics-extended-char-fill">{text}</span>
 							</span>
 						</span>
 					);
@@ -125,18 +106,12 @@ const LineComponent = React.memo(({ line, index, currentTime, isActive, isPlayin
 		</div>
 	);
 }, (prevProps, nextProps) => {
-	// 快速路径：如果关键属性没变，不重新渲染
 	if (prevProps.index !== nextProps.index) return false;
+	if (prevProps.line !== nextProps.line) return false;
 	if (prevProps.isActive !== nextProps.isActive) return false;
 	if (prevProps.isPlaying !== nextProps.isPlaying) return false;
 	if (prevProps.playingIndex !== nextProps.playingIndex) return false;
-	if (prevProps.line !== nextProps.line) return false;
-	
-	// 对于逐字歌词，currentTime 的任何变化都需要重新渲染以保持流畅
-	// 不再对 currentTime 进行节流，确保每次更新都能触发渲染
 	if (prevProps.currentTime !== nextProps.currentTime) return false;
-	
-	// 只有当所有属性都相同时才跳过渲染
 	return true;
 });
 
