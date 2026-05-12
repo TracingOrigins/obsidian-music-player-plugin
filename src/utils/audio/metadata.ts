@@ -3,7 +3,7 @@
  * 
  * 从音频文件的二进制数据中提取嵌入的元数据信息，包括：
  * - 封面图片
- * - 歌词文本（从音频文件的元数据标签中提取，支持多种格式）
+ * - 歌词文本（仅从 **LYRICS** 标签提取）
  * - 歌曲基本信息（标题、艺术家、专辑等）
  * - 音轨号和时长等
  * 
@@ -58,6 +58,15 @@ function extractTextFromNativeTags(
 			if (typeof value === "string" && isMatched) {
 				return value;
 			}
+			// 格式1b：字符串数组（部分 Vorbis / APE 标签）
+			else if (
+				Array.isArray(value) &&
+				isMatched &&
+				value.length > 0 &&
+				value.every((item: unknown) => typeof item === "string")
+			) {
+				return (value as string[]).join("\n");
+			}
 			// 格式2：对象中包含 text 属性（字符串）
 			else if (value && typeof value.text === "string" && (isMatched || (descriptionMatcher && descriptionMatcher(value.description || "")))) {
 				return value.text;
@@ -73,6 +82,21 @@ function extractTextFromNativeTags(
 }
 
 /**
+ * 仅从名为 LYRICS 的标签读取歌词（例如 foobar2000 的 TXXX:LYRICS、部分写入器的 LYRICS 帧、Vorbis LYRICS）。
+ * 不读取 USLT、SYLT、common.lyrics 等其它字段，便于在文件中只维护一个歌词标签。
+ */
+function extractLyricsFromLyricsTagOnly(
+	native: Record<string, any[]> | undefined
+): string | undefined {
+	if (!native) return undefined;
+	return extractTextFromNativeTags(
+		native,
+		(_id, upperId) => upperId === "LYRICS",
+		(desc) => /^LYRICS$/i.test(String(desc).trim())
+	);
+}
+
+/**
  * 嵌入的音频元数据接口
  * 表示从音频文件中提取出的所有元数据信息
  */
@@ -81,8 +105,6 @@ export interface EmbeddedAudioMetadata {
 	coverDataUrl?: string;
 	/** 歌词文本内容 */
 	lyricsText?: string;
-	/** 逐字时间歌词文本内容（LYRICS_EXTENDED 标签） */
-	lyricsExtended?: string;
 	/** 歌曲标题 */
 	title?: string;
 	/** 艺术家名称 */
@@ -150,7 +172,7 @@ export async function readAudioFileBinary(
  * 
  * 使用 music-metadata-browser 库解析音频文件，提取：
  * 1. 封面图片：转换为 Blob URL
- * 2. 歌词：支持多种格式（common.lyrics、USLT、SYLT、foobar2000 的 LYRICS 等）
+ * 2. 歌词：仅从 **LYRICS** 标签读取（含 TXXX 描述为 LYRICS 等），可为逐句 LRC 或带尖括号时间戳的逐字歌词原文
  * 3. 基本信息：标题、艺术家、专辑、年份、流派、音轨号、时长等
  * 
  * @param buffer 音频文件的二进制数据（ArrayBuffer）
@@ -207,64 +229,10 @@ export async function getEmbeddedAudioMetadataFromBuffer(
 			result.coverDataUrl = `data:${mimeType};base64,${base64}`;
 		}
 
-		// 提取歌词文本（从音频文件的元数据标签中提取）
-		// 歌词可能存储在多个位置：
-		// 1. metadata.common.lyrics（通用歌词字段）
-		// 2. metadata.native 中的各种格式特定标签（USLT、SYLT、LYRICS 等）
-		// 注意：只从音频文件的元数据标签中提取，不从外部 .lrc 文件读取
-		let lyrics = "";
-		// 首先尝试从通用歌词字段获取
-		if (metadata.common.lyrics && metadata.common.lyrics.length) {
-			lyrics = metadata.common.lyrics.join("\n");
-		} else {
-			// 如果通用字段没有，则从原生标签中查找
-			// 先尝试使用辅助函数提取
-			const extractedLyrics = extractTextFromNativeTags(
-				metadata.native,
-				(id, upperId) => {
-					// 检查是否是歌词相关的标签（如 foobar2000 使用的 LYRICS、TXXX:LYRICS 等）
-					const isLyricsId = /lyrics/i.test(id);
-					// 处理标准 ID3 歌词帧：USLT（未同步歌词）或 SYLT（同步歌词）
-					const isStandardLyrics = upperId === "USLT" || upperId === "SYLT";
-					return isLyricsId || isStandardLyrics;
-				},
-				(desc) => /lyrics/i.test(desc)
-			);
-			if (extractedLyrics) {
-				lyrics = extractedLyrics;
-			} else if (metadata.native) {
-				// 特殊处理：USLT 帧可能包含在对象的 text 属性中
-				for (const format of Object.keys(metadata.native)) {
-					const nativeTags = metadata.native[format] || [];
-					for (const tag of nativeTags) {
-						const id = String(tag.id || "").toUpperCase();
-						const value: any = tag.value;
-						if (id === "USLT" && value && typeof value.text === "string") {
-							lyrics = value.text;
-							break;
-						}
-					}
-					if (lyrics) break;
-				}
-			}
-		}
-		// 如果找到歌词，添加到结果中
+		// 歌词：只读取 LYRICS 标签中的原文（逐句 LRC 与逐字歌词均存于此，由插件解析时自动识别）
+		const lyrics = extractLyricsFromLyricsTagOnly(metadata.native) || "";
 		if (lyrics) {
 			result.lyricsText = lyrics;
-		}
-
-		// 提取逐字时间歌词（LYRICS_EXTENDED 标签）
-		const lyricsExtended = extractTextFromNativeTags(
-			metadata.native,
-			(id, upperId) => {
-				// 检查是否是 LYRICS_EXTENDED 标签
-				return /lyrics_extended/i.test(id) || upperId === "LYRICS_EXTENDED";
-			},
-			(desc) => /lyrics_extended/i.test(desc)
-		);
-		// 如果找到逐字歌词，添加到结果中
-		if (lyricsExtended) {
-			result.lyricsExtended = lyricsExtended;
 		}
 
 		// 提取基本元数据信息

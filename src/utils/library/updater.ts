@@ -117,7 +117,7 @@ export async function rebuildAllData(
 				// 更新曲目元数据
 				// 注意：
 				// - 封面图片只从音频文件的元数据中提取内嵌封面，实时获取，不保存到 data.json 中
-				// - 歌词只从音频文件的元数据标签中提取（lyricsText 和 lyricsExtended），不从外部 .lrc 文件读取
+				// - 歌词只从音频文件的 LYRICS 标签提取（写入 lyrics）
 				// - 使用 ID 系统：获取或创建曲目 ID，然后使用 ID 作为键
 				const { getOrCreateTrackId } = await import("@/utils/track/id");
 				const trackId = getOrCreateTrackId(file.path, plugin.settings);
@@ -129,7 +129,6 @@ export async function rebuildAllData(
 					// 封面只从音频文件的元数据中提取内嵌封面，实时获取，不保存
 					// 歌词从音频文件的元数据标签中提取
 					lyrics: audioMetadata.lyricsText || '',
-					lyricsExtended: audioMetadata.lyricsExtended || '',
 					year: audioMetadata.year,
 					genre: Array.isArray(audioMetadata.genre) ? 
 						audioMetadata.genre[0] : audioMetadata.genre,

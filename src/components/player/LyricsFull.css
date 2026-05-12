@@ -52,6 +52,8 @@
 	cursor: pointer;
 	color: var(--text-muted);
 	transition: color 0.2s ease;
+	white-space: pre-wrap;
+	word-break: break-word;
 }
 
 /* 中心高亮行（当前播放行）：只改变颜色 */

@@ -67,6 +67,9 @@
 	transition: color 0.2s ease;
 	user-select: none;
 	display: inline-block;
+	white-space: pre-wrap;
+	word-break: break-word;
+	letter-spacing: 0.04em;
 }
 
 .music-player .lyrics-extended-line.is-playing .lyrics-extended-text {
@@ -78,46 +81,65 @@
 .music-player .lyrics-extended-char {
 	display: inline-block;
 	position: relative;
+	vertical-align: baseline;
 	line-height: inherit;
+	padding: 0 0.06em;
+	box-sizing: content-box;
 }
 
-/* 背景文字（未填充部分） */
+.music-player .lyrics-extended-char.is-ws {
+	min-width: 0.35em;
+}
+
+/* 背景层 */
 .music-player .lyrics-extended-char-bg {
 	display: inline-block;
+	position: relative;
+	z-index: 0;
 	color: var(--text-normal);
 	opacity: 0.5;
+	font-weight: 600;
 }
 
 /* 播放过的歌词和当前行的背景文字颜色 */
 .music-player .lyrics-extended-line.is-played .lyrics-extended-char-bg,
 .music-player .lyrics-extended-line.is-playing .lyrics-extended-char-bg {
 	color: var(--interactive-accent);
-	opacity: 0.5;
+	opacity: 0.45;
 }
 
-/* 填充文字（已填充部分，从左到右显示） */
+/* 从左向右揭示（裁剪宽度，避免 scaleX 拉伸） */
+.music-player .lyrics-extended-char-fill-clip {
+	position: absolute;
+	left: 0;
+	top: 0;
+	bottom: 0;
+	overflow: hidden;
+	max-width: 100%;
+	z-index: 1;
+	pointer-events: none;
+	will-change: width;
+}
+
 .music-player .lyrics-extended-char-fill {
 	position: absolute;
 	left: 0;
 	top: 0;
-	overflow: hidden;
-	color: var(--interactive-accent);
-	font-weight: 600;
+	display: inline-block;
 	white-space: nowrap;
 	line-height: inherit;
-	height: 100%;
-	width: 100%;
-	/* 使用 transform 代替 width 可以获得更好的性能 */
-	will-change: transform;
-	/* 使用 transform 可以获得硬件加速，性能更好 */
-	transform: scaleX(0);
-	transform-origin: left;
-	/* 减少 transition 时间，提高响应速度 */
-	transition: transform 0.03s linear;
+	color: var(--interactive-accent);
+	font-weight: 600;
 }
 
+.music-player .lyrics-extended-line.is-playing .lyrics-extended-char-bg,
 .music-player .lyrics-extended-line.is-playing .lyrics-extended-char-fill {
-	font-weight: 700;
+	font-weight: 600;
+}
+
+.music-player .lyrics-extended-char.is-word-unit {
+	letter-spacing: normal;
+	padding: 0 0.1em;
 }
 
 .music-player .lyrics-extended-empty {

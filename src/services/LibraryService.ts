@@ -636,7 +636,6 @@ export class LibraryService {
 				artist: audioMetadata.artist || '未知艺术家',
 				album: audioMetadata.album || '未知专辑',
 				lyrics: audioMetadata.lyricsText || '',
-				lyricsExtended: audioMetadata.lyricsExtended || '',
 				year: audioMetadata.year,
 				genre: Array.isArray(audioMetadata.genre) ? 
 					audioMetadata.genre[0] : audioMetadata.genre,
