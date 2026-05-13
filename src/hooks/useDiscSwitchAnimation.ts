@@ -5,7 +5,7 @@
  * - 封面预加载
  * - 唱片滑动动画（上一首/下一首）
  * - 唱针进出动画与时间编排
- * - 多个 setTimeout 的管理与清理
+ * - 多个 window.setTimeout 的管理与清理
  */
 
 import React from "react";
@@ -74,16 +74,16 @@ function preloadCover(coverUrl: string | undefined): Promise<void> {
 		const img = new Image();
 		
 		// 设置超时，避免长时间等待
-		const timeout = setTimeout(() => {
+		const timeout = window.setTimeout(() => {
 			resolve(); // 超时后也继续，避免阻塞动画
 		}, 1000); // 1秒超时
 
 		img.onload = () => {
-			clearTimeout(timeout);
+			window.clearTimeout(timeout);
 			resolve();
 		};
 		img.onerror = () => {
-			clearTimeout(timeout);
+			window.clearTimeout(timeout);
 			resolve(); // 即使加载失败也继续，避免阻塞动画
 		};
 		
@@ -92,7 +92,7 @@ function preloadCover(coverUrl: string | undefined): Promise<void> {
 		
 		// 如果图片已经在缓存中，complete 会立即变为 true
 		if (img.complete) {
-			clearTimeout(timeout);
+			window.clearTimeout(timeout);
 			resolve();
 		}
 	});
@@ -136,7 +136,8 @@ export function useDiscSwitchAnimation({
 	const [isNeedleAnimating, setIsNeedleAnimating] = React.useState(false);
 	// 唱针返回逻辑：播放时且唱针动画未进行时，唱针处于播放姿态
 	const isNeedlePlaying = isPlaying && !isNeedleAnimating;
-	const timeoutRefs = React.useRef<Array<ReturnType<typeof setTimeout>>>([]);
+	// window.setTimeout 在浏览器返回 number；与 Node 的 Timeout 类型合并时会冲突，故用 number[]
+	const timeoutRefs = React.useRef<number[]>([]);
 
 	// 始终更新 latestCoverUrlRef，确保动画完成时能获取到最新值
 	React.useEffect(() => {
@@ -168,11 +169,11 @@ export function useDiscSwitchAnimation({
 		setNextDiscVisible(true); // 显示下一个唱片
 		
 		// 清理之前的 timeout
-		timeoutRefs.current.forEach((timeout: ReturnType<typeof setTimeout>) => clearTimeout(timeout));
+		timeoutRefs.current.forEach((id) => window.clearTimeout(id));
 		timeoutRefs.current = [];
 		
 		// 等待 DOM 更新完成后再触发动画
-		const domUpdateTimeout = setTimeout(() => {
+		const domUpdateTimeout = window.setTimeout(() => {
 			// 启用动画并设置目标位置
 			setShouldAnimate(true);
 			const currentOffset = isNext ? -workspaceLeafWidth : workspaceLeafWidth;
@@ -185,13 +186,13 @@ export function useDiscSwitchAnimation({
 		// 在300ms时让唱针开始返回，这样在600ms时唱针完成，比唱片(550ms)慢50ms
 		const discAnimationComplete = ANIMATION_TIMINGS.DISC_ANIMATION_DURATION + ANIMATION_TIMINGS.DISC_ANIMATION_BUFFER;
 		const needleStartTime = discAnimationComplete + ANIMATION_TIMINGS.NEEDLE_DELAY - ANIMATION_TIMINGS.NEEDLE_TRANSITION_DURATION;
-		const needleTimeout = setTimeout(() => {
+		const needleTimeout = window.setTimeout(() => {
 			setIsNeedleAnimating(false);
 		}, needleStartTime);
 		timeoutRefs.current.push(needleTimeout);
 		
 		// 动画完成后，更新封面并重置位置，然后恢复播放
-		const animationCompleteTimeout = setTimeout(() => {
+		const animationCompleteTimeout = window.setTimeout(() => {
 			// 动画完成后，使用最新的 coverUrl（通过 ref 获取，确保是最新值）
 			setDisplayCoverUrl(latestCoverUrlRef.current);
 			
@@ -272,7 +273,7 @@ export function useDiscSwitchAnimation({
 	// 组件卸载时清理所有 timeout
 	React.useEffect(() => {
 		return () => {
-			timeoutRefs.current.forEach((timeout: ReturnType<typeof setTimeout>) => clearTimeout(timeout));
+			timeoutRefs.current.forEach((id) => window.clearTimeout(id));
 			timeoutRefs.current = [];
 		};
 	}, []);

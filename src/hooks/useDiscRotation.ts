@@ -53,7 +53,7 @@ export function useDiscRotation({ isPlaying }: UseDiscRotationParams): UseDiscRo
 			const currentAngle = animationStartAngleRef.current + (elapsed * rotationSpeed);
 			rotationRef.current = currentAngle;
 			setRotationAngle(currentAngle);
-			animationFrameRef.current = requestAnimationFrame(updateRotation);
+			animationFrameRef.current = window.requestAnimationFrame(updateRotation);
 		}
 	}, [isPlaying]);
 
@@ -64,7 +64,7 @@ export function useDiscRotation({ isPlaying }: UseDiscRotationParams): UseDiscRo
 			animationStartTimeRef.current = Date.now();
 			animationStartAngleRef.current = rotationRef.current;
 			// 开始动画循环
-			animationFrameRef.current = requestAnimationFrame(updateRotation);
+			animationFrameRef.current = window.requestAnimationFrame(updateRotation);
 		} else {
 			// 停止播放时，取消动画循环
 			if (animationFrameRef.current !== null) {
@@ -95,7 +95,7 @@ export function useDiscRotation({ isPlaying }: UseDiscRotationParams): UseDiscRo
 			animationFrameRef.current = null;
 		}
 		if (isPlaying) {
-			animationFrameRef.current = requestAnimationFrame(updateRotation);
+			animationFrameRef.current = window.requestAnimationFrame(updateRotation);
 		}
 	}, [isPlaying, updateRotation]);
 

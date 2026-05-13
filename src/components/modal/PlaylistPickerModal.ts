@@ -83,7 +83,7 @@ export class PlaylistPickerModal extends FuzzySuggestModal<string> {
 		resolve(item);
 		
 		// 延迟关闭模态框，确保 resolve 先执行
-		setTimeout(() => {
+		window.setTimeout(() => {
 			this.close();
 		}, 0);
 	}
@@ -101,7 +101,7 @@ export class PlaylistPickerModal extends FuzzySuggestModal<string> {
 		
 		// 延迟检查，给 onChooseItem 一个机会先执行
 		// 这样可以避免重复处理
-		setTimeout(() => {
+		window.setTimeout(() => {
 			// 如果已经通过 onChooseItem 选择了，不再处理
 			if (this.chosen) {
 				this.chosen = false;

@@ -158,7 +158,7 @@ export class AudioService {
 				this.audioElement.pause();
 				// 等待一小段时间，让 play() Promise 有时间完成或被正确处理
 				// 10ms 足够让 Promise 进入错误处理流程
-				await new Promise(resolve => setTimeout(resolve, 10));
+				await new Promise(resolve => window.setTimeout(resolve, 10));
 			}
 			
 			// 移除事件监听器

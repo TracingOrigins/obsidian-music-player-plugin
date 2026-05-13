@@ -329,7 +329,7 @@ export class MusicPlayerView extends ItemView {
 			console.error("初始化视图时出错:", error);
 			// 即使出错，也尝试显示错误信息
 			if (this.containerEl) {
-				const errorDiv = document.createElement("div");
+				const errorDiv = this.containerEl.doc.createElement("div");
 				errorDiv.setCssProps({ padding: "20px", color: "var(--text-error)" });
 				errorDiv.textContent = tWithParams("view.initFailed", {
 					detail: error instanceof Error ? error.message : String(error),

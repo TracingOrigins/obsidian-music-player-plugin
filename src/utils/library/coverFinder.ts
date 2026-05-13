@@ -23,10 +23,13 @@ import { IMAGE_EXTENSIONS } from "@/constants/audio";
  */
 async function imageFileToUrl(app: App, file: TFile): Promise<string | undefined> {
 	try {
-		// Obsidian 资源路径（推荐）
-		// 注意：在某些环境下 getResourcePath 可能不可用，做兜底
-		const resourcePath = (app.vault as any)?.getResourcePath?.(file) as string | undefined;
-		if (resourcePath) return resourcePath;
+		// Obsidian 资源路径（推荐）；失败时回退为 base64
+		try {
+			const resourcePath = app.vault.getResourcePath(file);
+			if (resourcePath) return resourcePath;
+		} catch {
+			// 忽略，走 readBinary 兜底
+		}
 
 		const binary = await app.vault.readBinary(file);
 		const base64 = Buffer.from(binary).toString("base64");

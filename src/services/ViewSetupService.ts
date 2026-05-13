@@ -49,7 +49,7 @@ export class ViewSetupService {
 		const navHostEl = navContainer.querySelector("nav-header");
 		let navHost = navHostEl instanceof HTMLElement ? navHostEl : null;
 		if (!navHost) {
-			navHost = document.createElement("div");
+			navHost = navContainer.doc.createElement("div");
 			// 为导航栏宿主添加统一根前缀，便于样式隔离与定位
 			navHost.className = "music-player nav-header";
 			if (viewHeader && navContainer === leafContent) {
@@ -67,7 +67,7 @@ export class ViewSetupService {
 		oldReactMounts.forEach(el => el.remove());
 		
 		// 创建新的 DOM 元素用于挂载 React
-		const reactMount = document.createElement("div");
+		const reactMount = container.doc.createElement("div");
 		// 为侧栏内容区根节点添加统一根前缀，便于用 .music-player 作为样式作用域
 		reactMount.className = "music-player music-player-container music-player-react-root";
 		// 确保容器有内容，如果没有子元素，直接 appendChild

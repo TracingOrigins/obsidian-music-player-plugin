@@ -87,7 +87,6 @@ export default tseslint.config(
 	{
 		files: [
 			"src/utils/polyfills/buffer.ts",
-			"src/services/AssetService.ts",
 			"src/utils/audio/metadata.ts",
 			"src/utils/library/coverFinder.ts",
 			"src/utils/library/updater.ts",
@@ -97,6 +96,8 @@ export default tseslint.config(
 		],
 		rules: {
 			"import/no-nodejs-modules": "off",
+			// npm 包 `buffer` 与 Node 内置同名；此处仅为浏览器 polyfill，非桌面 Node API
+			"obsidianmd/no-nodejs-modules": "off",
 			"@typescript-eslint/no-require-imports": "off",
 			"@typescript-eslint/no-explicit-any": "off",
 			"@typescript-eslint/no-unsafe-assignment": "off",

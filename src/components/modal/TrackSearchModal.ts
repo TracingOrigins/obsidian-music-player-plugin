@@ -245,7 +245,7 @@ export class TrackSearchModal extends FuzzySuggestModal<TFile> {
 		resolve(item);
 		
 		// 延迟关闭模态框，确保 resolve 先执行
-		setTimeout(() => {
+		window.setTimeout(() => {
 			this.close();
 		}, 0);
 	}
@@ -270,7 +270,7 @@ export class TrackSearchModal extends FuzzySuggestModal<TFile> {
 		
 		// 延迟检查，给 onChooseItem 一个机会先执行
 		// 这样可以避免重复处理
-		setTimeout(() => {
+		window.setTimeout(() => {
 			// 如果已经通过 onChooseItem 选择了，不再处理
 			if (this.chosen) {
 				this.chosen = false;
@@ -405,7 +405,7 @@ export class TrackSearchModal extends FuzzySuggestModal<TFile> {
 		);
 
 		// 观察所有已存在的封面容器
-		setTimeout(() => {
+		window.setTimeout(() => {
 			if (this.observer && this.modalEl) {
 				const coverContainers = this.modalEl.querySelectorAll('[data-track-path]');
 				coverContainers.forEach((container) => {
@@ -431,7 +431,7 @@ export class TrackSearchModal extends FuzzySuggestModal<TFile> {
 			this.open();
 			
 			// 在模态框打开后设置 Intersection Observer
-			setTimeout(() => {
+			window.setTimeout(() => {
 				this.setupIntersectionObserver();
 			}, 100);
 		});

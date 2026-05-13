@@ -67,10 +67,10 @@ export function usePlaybackState(view: MusicPlayerView): UsePlaybackStateReturn 
 				setPlayback(view.getReactPlaybackSnapshot());
 				lastUpdateTime = now;
 			}
-			rafId = requestAnimationFrame(updatePlayback);
+			rafId = window.requestAnimationFrame(updatePlayback);
 		};
 
-		rafId = requestAnimationFrame(updatePlayback);
+		rafId = window.requestAnimationFrame(updatePlayback);
 		return () => cancelAnimationFrame(rafId);
 	}, [view]);
 

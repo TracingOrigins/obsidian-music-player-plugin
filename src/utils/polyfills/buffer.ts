@@ -1,25 +1,30 @@
 /**
  * Buffer Polyfill 工具模块
- * 
+ *
  * 为移动端提供 Buffer polyfill
  * music-metadata-browser 库内部使用了 Buffer，需要在全局作用域中提供
  */
 
 import { Buffer } from "buffer";
 
+type WindowWithBuffer = Window & { Buffer?: typeof Buffer; activeWindow?: Window };
+
+function ensureBufferOn(win: Window | undefined | null): void {
+	if (!win) return;
+	const w = win as WindowWithBuffer;
+	if (!w.Buffer) {
+		w.Buffer = Buffer;
+	}
+}
+
 /**
  * 初始化 Buffer polyfill
  * 在全局作用域中设置 Buffer，确保 music-metadata-browser 等库可以正常工作
  */
 export function initBufferPolyfill(): void {
-	if (typeof globalThis !== "undefined" && !globalThis.Buffer) {
-		globalThis.Buffer = Buffer;
-	}
-	if (typeof global !== "undefined" && !global.Buffer) {
-		global.Buffer = Buffer;
-	}
-	if (typeof window !== "undefined" && !window.Buffer) {
-		(window as any).Buffer = Buffer;
-	}
+	if (typeof window === "undefined") return;
+	const root = window as WindowWithBuffer;
+	ensureBufferOn(root);
+	// Obsidian：与主 `window` 可能不同（弹出窗口获得焦点时）
+	ensureBufferOn(root.activeWindow);
 }
-

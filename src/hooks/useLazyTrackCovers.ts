@@ -129,7 +129,7 @@ export function useLazyTrackCovers({
 		const observer = new IntersectionObserver(
 			(entries) => {
 				// 使用 requestAnimationFrame 批量处理，提升性能
-				requestAnimationFrame(() => {
+				window.requestAnimationFrame(() => {
 					entries.forEach((entry) => {
 						if (!entry.isIntersecting || shouldStopLoadingRef.current) return;
 						
@@ -266,7 +266,7 @@ export function useLazyTrackCovers({
 		);
 
 		// 使用 requestAnimationFrame 确保 DOM 已经更新
-		const rafId = requestAnimationFrame(() => {
+		const rafId = window.requestAnimationFrame(() => {
 			// 观察所有 track 元素
 			const refs = trackRefsRef.current;
 			for (const [, ref] of refs) {

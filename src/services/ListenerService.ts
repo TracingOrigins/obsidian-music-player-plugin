@@ -8,7 +8,7 @@
 
 import { App, TAbstractFile, TFile } from "obsidian";
 import MusicPlayerPlugin from "@/main";
-import { SUPPORTED_AUDIO_FORMATS } from "@/constants";
+import { isSupportedAudioExtension, SUPPORTED_AUDIO_FORMATS } from "@/constants";
 import { LibraryService } from "./LibraryService";
 import { StateService } from "./StateService";
 import { type AudioEventHandlers, AudioService } from "./AudioService";
@@ -45,7 +45,7 @@ export class ListenerService {
 			return false;
 		}
 		const ext = file.extension?.toLowerCase() || '';
-		return SUPPORTED_AUDIO_FORMATS.includes(`.${ext}` as any);
+		return isSupportedAudioExtension(ext);
 	}
 
 	/**
@@ -165,7 +165,7 @@ export class ListenerService {
 			// 检查是否是音乐文件且在音乐文件夹中
 			if (file instanceof TFile) {
 				const ext = file.extension?.toLowerCase() || '';
-				const isMusic = SUPPORTED_AUDIO_FORMATS.includes(`.${ext}` as any);
+				const isMusic = isSupportedAudioExtension(ext);
 				if (isMusic && this.isInMusicFolder(file)) {
 					// 立即清理已删除的歌曲数据（已自动处理，不需要再检查）
 					void this.handleFileDelete(file.path);
