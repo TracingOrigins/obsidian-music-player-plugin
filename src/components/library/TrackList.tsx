@@ -15,6 +15,7 @@ import { PlayingIndicator } from "@/components/player/PlayingIndicator";
 import { IconButton } from "@/components/shared/IconButton";
 import { useLazyTrackCovers } from "@/hooks/useLazyTrackCovers";
 import "./LibraryPage.css";
+import { t } from "@/utils/i18n/i18n";
 
 /**
  * TrackList 组件的属性接口
@@ -142,7 +143,7 @@ export function TrackList({
 	}, []);
 
 	if (!tracks.length) {
-		return <div className="empty">暂无歌曲</div>;
+		return <div className="empty">{t("library.empty.noTracks")}</div>;
 	}
 
 	// 判断当前 sectionId 是否匹配 currentList
@@ -185,37 +186,37 @@ export function TrackList({
 
 	return (
 		<div className="track-list">
-			{tracks.map((t) => {
-				const isFavorite = favoritesSet.has(t.path);
+			{tracks.map((track) => {
+				const isFavorite = favoritesSet.has(track.path);
 				// 只有当 sectionId 匹配 currentList 时，才高亮当前歌曲
-				const isActive = isSectionMatched && activePath === t.path;
+				const isActive = isSectionMatched && activePath === track.path;
 				// 获取该 track 的 ref（应该在 useEffect 中已经初始化）
-				let trackRef = trackRefs.get(t.path);
+				let trackRef = trackRefs.get(track.path);
 				if (!trackRef) {
 					// 如果 ref 不存在，创建一个（这种情况理论上不应该发生）
 					trackRef = React.createRef<HTMLDivElement>();
-					trackRefs.set(t.path, trackRef);
+					trackRefs.set(track.path, trackRef);
 				}
 				
 				// 获取封面 URL（优先使用已有的 coverUrl，其次使用加载的封面）
-				const coverUrl = t.coverUrl || embeddedCovers.get(t.path);
+				const coverUrl = track.coverUrl || embeddedCovers.get(track.path);
 				
 				return (
 					<div
-						key={t.path}
+						key={track.path}
 						ref={trackRef}
-						data-track-path={t.path}
+						data-track-path={track.path}
 						className={`track-item ${isActive ? "is-active" : ""}`}
-						onClick={(e) => handleClick(e, t.path)}
-						onDoubleClick={(e) => handleDoubleClick(e, t.path)}
+						onClick={(e) => handleClick(e, track.path)}
+						onDoubleClick={(e) => handleDoubleClick(e, track.path)}
 					>
 						<div className="track-item-container">
 							<div className="track-main-wrapper">
 								<div className="track-cover">
 									{coverUrl ? (
-										<img src={coverUrl} alt={t.title} />
+										<img src={coverUrl} alt={track.title} />
 									) : (
-										<div className="track-cover-placeholder">{t.title?.[0] ?? "♪"}</div>
+										<div className="track-cover-placeholder">{track.title?.[0] ?? "♪"}</div>
 									)}
 								</div>
 								<div className="track-main">
@@ -225,22 +226,22 @@ export function TrackList({
 												<PlayingIndicator />
 											</span>
 										) : null}
-										{t.title}
+										{track.title}
 									</div>
 									<div className="track-sub">
-										<span className="track-artist">{t.artist}</span>
-										{t.album ? <span className="track-album"> · {t.album}</span> : null}
+										<span className="track-artist">{track.artist}</span>
+										{track.album ? <span className="track-album"> · {track.album}</span> : null}
 									</div>
 								</div>
 							</div>
 							<div className="track-actions">
 								<IconButton
 									icon="list-plus"
-									label="添加到歌单"
+									label={t("track.addToPlaylist")}
 									className="track-action-btn clickable-icon"
 									onClick={(e) => {
 										e.stopPropagation();
-										onAddToPlaylist(t.path, sectionId);
+										onAddToPlaylist(track.path, sectionId);
 									}}
 									onDoubleClick={(e) => {
 										e.stopPropagation();
@@ -249,11 +250,11 @@ export function TrackList({
 								/>
 								<IconButton
 									icon="heart"
-									label={isFavorite ? "取消收藏" : "添加到收藏"}
+									label={isFavorite ? t("track.removeFavorite") : t("track.addFavorite")}
 									className={`track-action-btn clickable-icon ${isFavorite ? "active" : ""}`}
 									onClick={(e) => {
 										e.stopPropagation();
-										onToggleFavorite(t.path, sectionId);
+										onToggleFavorite(track.path, sectionId);
 									}}
 									onDoubleClick={(e) => {
 										e.stopPropagation();
@@ -263,11 +264,11 @@ export function TrackList({
 								{playlistName ? (
 									<IconButton
 										icon="trash-2"
-										label="从歌单移除"
+										label={t("track.removeFromPlaylist")}
 										className="track-action-btn clickable-icon"
 										onClick={(e) => {
 											e.stopPropagation();
-											onRemoveFromPlaylist?.(t.path, playlistName);
+											onRemoveFromPlaylist?.(track.path, playlistName);
 										}}
 										onDoubleClick={(e) => {
 											e.stopPropagation();

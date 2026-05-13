@@ -6,6 +6,7 @@
 
 import { TFile } from "obsidian";
 import type { TrackInfo } from "@/types";
+import { t } from "@/utils/i18n/i18n";
 
 /**
  * 创建 SVG 播放占位符图标
@@ -41,7 +42,7 @@ export function createPlayPlaceholderSVG(): SVGSVGElement {
  * @param container 容器元素
  */
 export function createPlayingIndicator(container: HTMLElement): void {
-	container.setAttribute("aria-label", "正在播放");
+	container.setAttribute("aria-label", t("playback.playing"));
 	for (let i = 0; i < 4; i++) {
 		const bar = container.createDiv("equalizer-bar");
 		bar.style.animationDelay = `${i * 0.1}s`;
@@ -121,21 +122,19 @@ export function renderTrackItemContent(
 		titleEl.setText(title);
 	}
 	
-	// 创建并设置艺术家和专辑信息
+	// 创建并设置艺术家和专辑信息（缺省存空串；未知用 meta.* 词条）
 	const metaEl = textContainer.createDiv("playlist-item-meta");
-	const artist = track?.artist || "";
-	const album = track?.album || "";
-	
-	// 根据是否有艺术家和专辑信息，显示不同的格式
-	if (artist && album) {
-		// 两者都有：显示 "艺术家 • 专辑"
+	const artistStr = (track?.artist ?? "").trim();
+	const artist = artistStr === "" ? t("meta.unknownArtist") : artistStr;
+	let album: string | undefined;
+	if (track?.album !== undefined && track?.album !== null) {
+		const bv = String(track.album).trim();
+		album = bv === "" ? t("meta.unknownAlbum") : bv;
+	}
+	if (album !== undefined) {
 		metaEl.setText(`${artist} • ${album}`);
-	} else if (artist) {
-		// 只有艺术家：只显示艺术家
+	} else {
 		metaEl.setText(artist);
-	} else if (album) {
-		// 只有专辑：只显示专辑
-		metaEl.setText(album);
 	}
 	
 	return coverContainerEl;

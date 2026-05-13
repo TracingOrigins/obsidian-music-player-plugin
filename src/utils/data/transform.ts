@@ -34,10 +34,8 @@ export function generateArtistsAndAlbums(settings: MusicPlayerSettings) {
     // 遍历所有曲目，建立艺术家和专辑的映射关系
     Object.entries(settings.tracks).forEach(([trackId, track]) => {
         const trackData = track;
-        // 获取艺术家名称，如果没有则使用默认值
-        const artist = trackData.artist || '未知艺术家';
-        // 获取专辑名称，如果没有则使用默认值
-        const album = trackData.album || '未知专辑';
+        const artist = (trackData.artist ?? "").trim();
+        const album = (trackData.album ?? "").trim();
 
         // 更新艺术家映射表
         // 如果该艺术家还不存在，创建新的数组

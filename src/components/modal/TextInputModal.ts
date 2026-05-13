@@ -8,6 +8,7 @@
 import { App } from "obsidian";
 import { BaseModal } from "./BaseModal";
 import "./TextInputModal.css";
+import { t } from "@/utils/i18n/i18n";
 
 /**
  * 文本输入模态框类
@@ -40,8 +41,8 @@ export class TextInputModal extends BaseModal<string | null> {
 
 		// 创建按钮容器
 		this.createButtonContainer(
-			"确定",
-			"取消",
+			t("common.ok"),
+			t("common.cancel"),
 			() => this.submit(this.inputEl.value),
 			() => this.cancel(null)
 		);

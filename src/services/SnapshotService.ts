@@ -19,6 +19,7 @@ import type { CurrentList, ListService } from "./ListService";
 import type { LibraryService } from "./LibraryService";
 import { sortTracksByTrack } from "@/utils/data/sort";
 import { getOrCreateTrackId, getTrackPath } from "@/utils/track/id";
+import { t } from "@/utils/i18n/i18n";
 
 /**
  * 快照状态接口
@@ -136,8 +137,9 @@ export class SnapshotService {
 		const trackId = currentPath ? getOrCreateTrackId(currentPath, this.plugin.settings) : null;
 		const track = trackId ? this.plugin.settings.tracks[trackId] : undefined;
 
-		const title = track?.title || (currentPath ? currentPath.split("/").pop() || "" : "未选择曲目");
-		const artist = track?.artist || "未知艺术家";
+		const title = track?.title || (currentPath ? currentPath.split("/").pop() || "" : t("playback.noTrack"));
+		const artistStr = (track?.artist ?? "").trim();
+		const artist = artistStr === "" ? t("meta.unknownArtist") : artistStr;
 		const coverUrl = this.resolveTrackCoverUrl(currentTrack);
 
 		const currentTime = audioElement?.currentTime ?? 0;
@@ -251,11 +253,18 @@ export class SnapshotService {
 			// 通过路径获取 ID，然后通过 ID 获取 track 信息
 			const trackId = getOrCreateTrackId(file.path, this.plugin.settings);
 			const meta = this.plugin.settings.tracks[trackId];
+			const artistStr = (meta?.artist ?? "").trim();
+			const artist = artistStr === "" ? t("meta.unknownArtist") : artistStr;
+			let album: string | undefined;
+			if (meta?.album !== undefined && meta?.album !== null) {
+				const bv = String(meta.album).trim();
+				album = bv === "" ? t("meta.unknownAlbum") : bv;
+			}
 			return {
 				path: file.path,
 				title: meta?.title || file.name,
-				artist: meta?.artist || "未知艺术家",
-				album: meta?.album,
+				artist,
+				album,
 				coverUrl: this.resolveTrackCoverUrl(file),
 				duration: meta?.duration,
 			};

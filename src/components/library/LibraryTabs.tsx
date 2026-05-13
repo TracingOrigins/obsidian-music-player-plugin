@@ -1,111 +1,82 @@
 /**
- * 音乐库标签页组件
- * 
- * 负责顶部标签栏的显示和交互。
+ * 音乐库顶部标签栏（role="tablist" / role="tab"）。
  */
 
 import React from "react";
 import { PlayingIndicator } from "@/components/player/PlayingIndicator";
 import "./LibraryPage.css";
+import { t } from "@/utils/i18n/i18n";
 
-/**
- * 标签页 ID 类型
- */
-export type TabId = "favorites" | "all" | "playlists" | "artists" | "albums";
+export type TabId = "all" | "favorites" | "playlists" | "artists" | "albums";
 
-/**
- * 标签页定义
- */
-export interface TabDefinition {
-	id: TabId;
-	label: string;
-}
-
-/**
- * LibraryTabs 组件的属性接口
- */
 export interface LibraryTabsProps {
-	/** 当前激活的标签页 */
 	activeTab: TabId;
-	/** 切换标签页的回调函数 */
 	onChangeTab: (tabId: TabId) => void;
-	/** 当前播放列表标识（用于高亮显示当前列表） */
+	/** 与 currentList 一致且正在播放时，在对应标签上显示指示器 */
 	currentList?: string;
-	/** 当前正在播放的歌曲路径（用于判断是否显示播放指示器） */
 	activePath?: string | null;
 }
 
-/**
- * 音乐库标签页组件
- * 
- * 显示标签页切换按钮，支持播放状态指示。
- * 
- * @param props 组件属性
- */
-export function LibraryTabs({
-	activeTab,
-	onChangeTab,
-	currentList,
-	activePath,
-}: LibraryTabsProps) {
-	const tabDefs: TabDefinition[] = [
-		{ id: "all", label: "全部" },
-		{ id: "favorites", label: "收藏" },
-		{ id: "playlists", label: "歌单" },
-		{ id: "artists", label: "艺术家" },
-		{ id: "albums", label: "专辑" },
-	];
+const TAB_ORDER: TabId[] = ["all", "favorites", "playlists", "artists", "albums"];
 
-	// 判断当前标签页是否匹配 currentList
-	const isTabMatched = (tabId: TabId): boolean => {
-		if (!currentList || !activePath) return false;
-		
-		if (tabId === "all" && currentList === "all") {
-			return true;
-		}
-		
-		if (tabId === "favorites" && currentList === "favorites") {
-			return true;
-		}
-		
-		if (tabId === "playlists" && currentList.startsWith("playlist:")) {
-			return true;
-		}
-		
-		if (tabId === "artists" && currentList.startsWith("artist:")) {
-			return true;
-		}
-		
-		if (tabId === "albums" && currentList.startsWith("album:")) {
-			return true;
-		}
-		
-		return false;
-	};
+const TAB_I18N: Record<TabId, string> = {
+	all: "library.tab.all",
+	favorites: "library.tab.favorites",
+	playlists: "library.tab.playlists",
+	artists: "library.tab.artists",
+	albums: "library.tab.albums",
+};
 
+function tabMatchesCurrentList(tabId: TabId, currentList: string): boolean {
+	switch (tabId) {
+		case "all":
+			return currentList === "all";
+		case "favorites":
+			return currentList === "favorites";
+		case "playlists":
+			return currentList.startsWith("playlist:");
+		case "artists":
+			return currentList.startsWith("artist:");
+		case "albums":
+			return currentList.startsWith("album:");
+	}
+}
+
+export function LibraryTabs({ activeTab, onChangeTab, currentList, activePath }: LibraryTabsProps) {
 	return (
-		<div className="toolbar">
-			<div className="tabs">
-				{tabDefs.map((tab) => {
-					const matched = isTabMatched(tab.id);
-					
+		<nav className="toolbar">
+			<div className="tabs" role="tablist">
+				{TAB_ORDER.map((id) => {
+					const selected = activeTab === id;
+					const cl = currentList;
+					const matched = Boolean(cl && activePath && tabMatchesCurrentList(id, cl));
+
 					return (
-						<button
-							key={tab.id}
-							className={`tab-btn ${activeTab === tab.id ? "active" : ""}`}
-							onClick={() => onChangeTab(tab.id)}
+						<div
+							key={id}
+							role="tab"
+							id={`library-tab-${id}`}
+							aria-selected={selected}
+							tabIndex={0}
+							className={`library-tab${selected ? " active" : ""}`}
+							onClick={() => onChangeTab(id)}
+							onKeyDown={(e) => {
+								if (e.key === "Enter" || e.key === " ") {
+									e.preventDefault();
+									onChangeTab(id);
+								}
+							}}
 						>
 							{matched ? (
-								<span className="tab-playing-indicator">
+								<span className="tab-playing-indicator" aria-hidden="true">
 									<PlayingIndicator />
 								</span>
 							) : null}
-							{tab.label}
-						</button>
+							<span className="tab-label">{t(TAB_I18N[id])}</span>
+						</div>
 					);
 				})}
 			</div>
-		</div>
+		</nav>
 	);
 }
-

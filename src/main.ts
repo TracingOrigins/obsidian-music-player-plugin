@@ -19,6 +19,7 @@ import { generateArtistsAndAlbums } from './utils/data/transform';
 import { MusicPlayerSettingTab } from './settings/SettingTab';
 import type { MusicPlayerSettings } from './types';
 import { DEFAULT_SETTINGS } from './types';
+import { t } from './utils/i18n/i18n';
 
 /**
  * 播放模式类型
@@ -53,7 +54,7 @@ export default class MusicPlayerPlugin extends Plugin {
 
 		// 添加侧边栏图标（仅在桌面端可用，移动端不支持）
 		if (!Platform.isMobile) {
-			this.addRibbonIcon('lucide-music', 'Music player', () => {
+			this.addRibbonIcon('lucide-music', t('ribbon.musicPlayer'), () => {
 				// 点击图标后：在右侧栏打开播放器
 				void this.activateView();
 			});
@@ -62,7 +63,7 @@ export default class MusicPlayerPlugin extends Plugin {
 		// 添加快捷命令：打开音乐播放器
 		this.addCommand({
 			id: 'open-player',
-			name: '打开音乐播放器',
+			name: t('commands.openPlayer'),
 			callback: () => {
 				void this.activateView();
 			}
@@ -71,7 +72,7 @@ export default class MusicPlayerPlugin extends Plugin {
 		// 添加快捷命令：打开设置页面
 		this.addCommand({
 			id: 'open-settings',
-			name: '打开音乐播放器设置',
+			name: t('commands.openSettings'),
 			callback: () => {
 				void this.openSettings();
 			}

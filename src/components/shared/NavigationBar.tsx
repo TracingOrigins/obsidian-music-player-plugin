@@ -1,5 +1,6 @@
 import React from "react";
 import { type IconName, setIcon } from "obsidian";
+import { t } from "@/utils/i18n/i18n";
 
 /**
  * 导航图标按钮组件的属性接口
@@ -17,6 +18,8 @@ interface NavIconButtonProps {
 	onClick: () => void;
 	/** 是否显示提示圆点 */
 	showBadge?: boolean;
+	/** 重建提示圆点的无障碍标签 */
+	rebuildBadgeAria?: string;
 }
 
 /**
@@ -27,7 +30,7 @@ interface NavIconButtonProps {
  * 
  * @param props 按钮属性
  */
-function NavIconButton({ icon, label, active, disabled, onClick, showBadge }: NavIconButtonProps) {
+function NavIconButton({ icon, label, active, disabled, onClick, showBadge, rebuildBadgeAria }: NavIconButtonProps) {
 	const buttonRef = React.useRef<HTMLButtonElement>(null);
 
 	React.useEffect(() => {
@@ -46,7 +49,9 @@ function NavIconButton({ icon, label, active, disabled, onClick, showBadge }: Na
 				onClick={onClick}
 				disabled={disabled}
 			/>
-			{showBadge && <span className="nav-icon-badge" aria-label="需要重建索引" />}
+			{showBadge && (
+				<span className="nav-icon-badge" aria-label={rebuildBadgeAria ?? ""} />
+			)}
 		</div>
 	);
 }
@@ -107,37 +112,38 @@ export function NavigationBar(props: NavigationBarProps) {
 
 	return (
 		<div className="nav-buttons-container">
-			<NavIconButton icon="search" label="搜索" onClick={onSearch} />
+			<NavIconButton icon="search" label={t("nav.search")} onClick={onSearch} />
 			<NavIconButton
 				icon="music-2"
-				label="音乐库"
+				label={t("nav.library")}
 				active={activeTab === "library"}
 				onClick={onOpenLibrary}
 			/>
 			<NavIconButton
 				icon="disc-album"
-				label="唱片"
+				label={t("nav.disc")}
 				active={activeTab === "currentDisc" && currentPage === "disc"}
 				onClick={onOpenDisc}
 			/>
 			{onOpenLyrics && (
 				<NavIconButton
 					icon="type"
-					label="歌词"
+					label={t("nav.lyrics")}
 					active={activeTab === "currentDisc" && currentPage === "lyrics"}
 					onClick={onOpenLyrics}
 				/>
 			)}
 			<NavIconButton
 				icon="database-zap"
-				label="重建"
+				label={t("nav.rebuild")}
 				onClick={() => {
 					void onRebuild();
 				}}
 				disabled={isRebuilding}
 				showBadge={needsRebuild}
+				rebuildBadgeAria={t("nav.rebuildBadge")}
 			/>
-			<NavIconButton icon="settings" label="设置" onClick={onSettings} />
+			<NavIconButton icon="settings" label={t("nav.settings")} onClick={onSettings} />
 		</div>
 	);
 }
