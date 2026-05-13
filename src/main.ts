@@ -16,6 +16,7 @@ initBufferPolyfill();
 import { Platform, Plugin } from 'obsidian';
 import { MusicPlayerView, VIEW_TYPE_MUSIC_PLAYER } from './views/MusicPlayerView';
 import { generateArtistsAndAlbums } from './utils/data/transform';
+import { getTrackPath } from './utils/track/id';
 import { MusicPlayerSettingTab } from './settings/SettingTab';
 import type { MusicPlayerSettings } from './types';
 import { DEFAULT_SETTINGS } from './types';
@@ -101,6 +102,27 @@ export default class MusicPlayerPlugin extends Plugin {
 		const loadedData = await this.loadData() as Partial<MusicPlayerSettings> | null;
 		// 合并默认设置和已保存的设置
 		this.settings = Object.assign({}, DEFAULT_SETTINGS, loadedData);
+
+		// 迁移：旧版 autoPlayOpenTrackId → autoPlayOpenTrackPath，并去掉已废弃字段
+		const loadedWithLegacy = loadedData as { autoPlayOpenTrackId?: string } | null;
+		let shouldPersistMigration = false;
+		if (
+			loadedWithLegacy?.autoPlayOpenTrackId?.trim() &&
+			!(this.settings.autoPlayOpenTrackPath ?? "").trim()
+		) {
+			const p = getTrackPath(loadedWithLegacy.autoPlayOpenTrackId.trim(), this.settings);
+			if (p) {
+				this.settings.autoPlayOpenTrackPath = p;
+				shouldPersistMigration = true;
+			}
+		}
+		if (loadedWithLegacy && "autoPlayOpenTrackId" in loadedWithLegacy) {
+			delete (this.settings as { autoPlayOpenTrackId?: string }).autoPlayOpenTrackId;
+			shouldPersistMigration = true;
+		}
+		if (shouldPersistMigration) {
+			await this.saveSettings();
+		}
 		
 		// 确保 trackIndex 存在（新安装的用户）
 		if (!this.settings.trackIndex) {

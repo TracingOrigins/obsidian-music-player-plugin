@@ -9,6 +9,9 @@ import MusicPlayerPlugin from '@/main';
 import { t } from '@/utils/i18n/i18n';
 import { MusicPlayerView, VIEW_TYPE_MUSIC_PLAYER } from '@/views/MusicPlayerView';
 import { FolderSuggest } from '@/components/shared/FolderSuggest';
+import { getTrackSongDisplayName, TrackSuggest } from '@/components/shared/TrackSuggest';
+import { sortTracksByTrack } from '@/utils/data/sort';
+import { scanVaultAudioFiles } from '@/utils/library/scanVaultAudio';
 
 /**
  * 音乐播放器设置标签页类
@@ -73,17 +76,79 @@ export class MusicPlayerSettingTab extends PluginSettingTab {
 					});
 			});
 
-		// 创建自动播放设置项
+		// 创建自动播放开关；曲目选择在其下方的独立区域
 		new Setting(containerEl)
 			.setName(t('settings.autoPlay.name'))
 			.setDesc(t('settings.autoPlay.desc'))
 			.addToggle(toggle => toggle
 				.setValue(this.plugin.settings.autoPlayOnOpen ?? false)
 				.onChange(async (value) => {
-					// 保存用户选择的自动播放设置
 					this.plugin.settings.autoPlayOnOpen = value;
 					await this.plugin.saveSettings();
+					syncAutoPlayTrackVisibility();
 				}));
+
+		const autoPlayTrackWrap = containerEl.createDiv();
+		const syncAutoPlayTrackVisibility = () => {
+			autoPlayTrackWrap.style.display = this.plugin.settings.autoPlayOnOpen ? 'block' : 'none';
+		};
+		syncAutoPlayTrackVisibility();
+
+		const sortedTracks = sortTracksByTrack(
+			scanVaultAudioFiles(this.app, this.plugin.settings.musicFolder ?? ''),
+			this.plugin.settings
+		);
+
+		const pathSet = new Set(sortedTracks.map((f) => f.path));
+		let storedPath = (this.plugin.settings.autoPlayOpenTrackPath ?? '').trim();
+		if (storedPath && !pathSet.has(storedPath)) {
+			storedPath = '';
+			this.plugin.settings.autoPlayOpenTrackPath = '';
+			void this.plugin.saveSettings();
+		}
+
+		const fileForStoredPath = storedPath
+			? sortedTracks.find((f) => f.path === storedPath)
+			: undefined;
+		const inputDisplayValue = fileForStoredPath
+			? getTrackSongDisplayName(fileForStoredPath, this.plugin.settings)
+			: '';
+
+		const resolvePathFromInput = (trim: string): string => {
+			if (!trim) {
+				return '';
+			}
+			if (pathSet.has(trim)) {
+				return trim;
+			}
+			const byDisplay = sortedTracks.filter(
+				(f) => getTrackSongDisplayName(f, this.plugin.settings) === trim
+			);
+			if (byDisplay.length > 0 && byDisplay[0]) {
+				return byDisplay[0].path;
+			}
+			return this.plugin.settings.autoPlayOpenTrackPath;
+		};
+
+		new Setting(autoPlayTrackWrap)
+			.setName(t('settings.autoPlayTrack.name'))
+			.setDesc(t('settings.autoPlayTrack.desc'))
+			.addText((text) => {
+				const inputEl = text.inputEl;
+				new TrackSuggest(this.app, inputEl, this.plugin, sortedTracks);
+
+				text
+					.setPlaceholder(t('settings.autoPlayTrack.placeholder'))
+					.setValue(inputDisplayValue)
+					.onChange(async (value) => {
+						const trim = value.trim();
+						const nextPath = resolvePathFromInput(trim);
+						if (nextPath !== this.plugin.settings.autoPlayOpenTrackPath) {
+							this.plugin.settings.autoPlayOpenTrackPath = nextPath;
+							await this.plugin.saveSettings();
+						}
+					});
+			});
 
 	}
 }

@@ -158,6 +158,7 @@ export class MusicPlayerView extends ItemView {
 		this.listService = new ListService(this.libraryService, this.playlistService, this.plugin);
 		this.snapshotService = new SnapshotService(this.app, this.plugin, this.listService, this.libraryService);
 		this.playbackService = new PlaybackService(
+			this.plugin,
 			this.stateService,
 			this.audioService,
 			this.lyricsService,

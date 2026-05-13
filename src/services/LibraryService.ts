@@ -11,6 +11,7 @@
 import { App, TFile } from "obsidian";
 import MusicPlayerPlugin from "@/main";
 import { rebuildAllData as updateMusicLibrary } from "@/utils/library/updater";
+import { scanVaultAudioFiles } from "@/utils/library/scanVaultAudio";
 import { sortTracksByTrack } from "@/utils/data/sort";
 import { SUPPORTED_AUDIO_FORMATS } from "@/constants";
 import { StateService } from "./StateService";
@@ -182,17 +183,7 @@ export class LibraryService {
 	 * 根据设置的音乐文件夹过滤文件
 	 */
 	getAllMusicFiles(): TFile[] {
-		const files = this.app.vault.getFiles().filter((f) =>
-			SUPPORTED_AUDIO_FORMATS.includes(`.${f.extension.toLowerCase()}` as any)
-		);
-
-		// 如果设置了音乐文件夹，只扫描该文件夹内的文件
-		if (this.plugin.settings.musicFolder) {
-			const folder = this.plugin.settings.musicFolder.replace(/\/$/, "");
-			return files.filter((f) => f.path.startsWith(folder + "/") || f.path === folder);
-		}
-
-		return files;
+		return scanVaultAudioFiles(this.app, this.plugin.settings.musicFolder ?? "");
 	}
 
 	/**
