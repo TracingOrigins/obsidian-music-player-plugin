@@ -190,16 +190,22 @@ export default class MusicPlayerPlugin extends Plugin {
 	 * 打开 Obsidian 内置设置页面并激活音乐播放器插件的设置标签页
 	 */
 	async openSettings() {
-		// 打开 Obsidian 内置设置页面
-		// 使用类型断言访问设置管理器（Obsidian 内部 API）
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
-		const setting = (this.app as any).setting;
-		if (setting) {
-			// eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
-			await setting.open();
-			// 激活音乐播放器插件的设置标签页
-			// 插件设置标签页的 ID 就是插件的 manifest ID
-			// eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
+		const appWithSetting = this.app as unknown as {
+			setting?: {
+				open: () => void | Promise<void>;
+				/** Obsidian 1.4+；类型未在官方 d.ts 中完整暴露 */
+				openTabById?: (id: string) => void | Promise<void>;
+			};
+		};
+
+		const setting = appWithSetting.setting;
+		if (!setting) {
+			return;
+		}
+
+		await setting.open();
+
+		if (typeof setting.openTabById === "function") {
 			await setting.openTabById(this.manifest.id);
 		}
 	}
