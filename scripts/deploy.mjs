@@ -21,9 +21,40 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
-import dotenv from 'dotenv';
 
-// ==================== 路径常量 ====================
+/**
+ * 将 .env 文件中的键值对合并进 process.env（不覆盖已有环境变量，与 dotenv 默认行为一致）。
+ * 仅支持常见格式：KEY=value、可选引号、# 行注释与空行。
+ * @param {string} filePath .env 绝对路径
+ */
+function applyDotenvFile(filePath) {
+	const content = fs.readFileSync(filePath, 'utf8');
+	for (const line of content.split(/\r?\n/)) {
+		const trimmed = line.trim();
+		if (!trimmed || trimmed.startsWith('#')) {
+			continue;
+		}
+		const eq = trimmed.indexOf('=');
+		if (eq === -1) {
+			continue;
+		}
+		const key = trimmed.slice(0, eq).trim();
+		if (!key) {
+			continue;
+		}
+		let value = trimmed.slice(eq + 1).trim();
+		if (
+			(value.startsWith('"') && value.endsWith('"')) ||
+			(value.startsWith("'") && value.endsWith("'"))
+		) {
+			value = value.slice(1, -1);
+		}
+		if (process.env[key] === undefined) {
+			process.env[key] = value;
+		}
+	}
+}
+
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const projectRoot = path.resolve(__dirname, '../');
@@ -135,7 +166,7 @@ function getVaultPath() {
 		process.exit(0);
 	}
 
-	dotenv.config({ path: envPath });
+	applyDotenvFile(envPath);
 	const vaultPath = process.env.VAULT_PATH;
 
 	if (!vaultPath) {
