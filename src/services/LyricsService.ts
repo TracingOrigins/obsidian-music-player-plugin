@@ -13,6 +13,7 @@
 import { LyricLine, LyricsParser } from "@/utils/lyrics/parser";
 import { ExtendedLyricLine, LyricsExtendedParser } from "@/utils/lyrics/extendedParser";
 import { isTimestampedKaraokeLyrics } from "@/utils/lyrics/formatDetection";
+import { stripLeadingLyricsMetadata } from "@/utils/lyrics/normalizeLyrics";
 import MusicPlayerPlugin from "@/main";
 import { getOrCreateTrackId } from "@/utils/track/id";
 
@@ -53,15 +54,20 @@ export class LyricsService {
 			return { lyrics, extendedLyrics };
 		}
 
-		if (isTimestampedKaraokeLyrics(rawLyrics)) {
-			const parsed = LyricsExtendedParser.parse(rawLyrics);
+		const lyricsText = stripLeadingLyricsMetadata(rawLyrics);
+		if (!lyricsText.trim()) {
+			return { lyrics, extendedLyrics };
+		}
+
+		if (isTimestampedKaraokeLyrics(lyricsText)) {
+			const parsed = LyricsExtendedParser.parse(lyricsText);
 			if (parsed.length > 0) {
 				extendedLyrics.push(...parsed);
 			}
 		}
 
 		if (extendedLyrics.length === 0) {
-			const parsedLyrics = LyricsParser.parseLRC(rawLyrics);
+			const parsedLyrics = LyricsParser.parseLRC(lyricsText);
 
 			if (parsedLyrics.length > 0) {
 				lyrics.push(
@@ -71,7 +77,7 @@ export class LyricsService {
 					}))
 				);
 			} else {
-				const lines = rawLyrics.split(/\r?\n/).filter((l) => l.trim().length > 0);
+				const lines = lyricsText.split(/\r?\n/).filter((l) => l.trim().length > 0);
 				lyrics.push(
 					...lines.map((line, index) => ({
 						time: index * 3,
