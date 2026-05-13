@@ -145,8 +145,8 @@ export function TrackActions({
 			}
 		};
 
-		document.addEventListener("mousedown", handleClickOutside);
-		return () => document.removeEventListener("mousedown", handleClickOutside);
+		window.activeDocument.addEventListener("mousedown", handleClickOutside);
+		return () => window.activeDocument.removeEventListener("mousedown", handleClickOutside);
 	}, [isVolumeMenuVisible, isPlaybackRateMenuVisible]);
 
 	if (!currentPath) {

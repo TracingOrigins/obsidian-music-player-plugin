@@ -16,7 +16,7 @@ import { App, Notice } from "obsidian";
 import MusicPlayerPlugin from "@/main";
 import { getEmbeddedAudioMetadataFromBuffer, readAudioFileBinary } from "../audio/metadata";
 import { generateArtistsAndAlbums } from "../data/transform";
-import { SUPPORTED_AUDIO_FORMATS } from "@/constants";
+import { isSupportedAudioExtension } from "@/constants";
 import { t, tWithParams } from "@/utils/i18n/i18n";
 
 /**
@@ -49,7 +49,7 @@ export async function rebuildAllData(
 		// 2. 过滤音乐文件
 		const musicFiles = allFiles.filter(file => {
 			const ext = file.extension?.toLowerCase() || '';
-			return SUPPORTED_AUDIO_FORMATS.includes(`.${ext}` as any);
+			return isSupportedAudioExtension(ext);
 		});
 
 		// 3. 如果设置了音乐文件夹，只扫描该文件夹内的文件
@@ -139,9 +139,7 @@ export async function rebuildAllData(
 					year: audioMetadata.year,
 					genre: Array.isArray(audioMetadata.genre) ? 
 						audioMetadata.genre[0] : audioMetadata.genre,
-					track: typeof audioMetadata.track === 'number' 
-						? audioMetadata.track 
-						: (audioMetadata.track as any)?.no || undefined,
+					track: audioMetadata.track,
 					duration: audioMetadata.duration
 				};
 

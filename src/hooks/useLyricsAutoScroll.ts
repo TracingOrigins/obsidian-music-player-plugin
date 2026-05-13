@@ -100,7 +100,7 @@ export function useLyricsAutoScroll({
 
 		container.scrollTop = Math.max(0, targetScrollTop);
 
-		setTimeout(() => {
+		window.setTimeout(() => {
 			container.setCssProps({ scrollBehavior: originalScrollBehavior });
 		}, 0);
 
@@ -183,13 +183,13 @@ export function useLyricsAutoScroll({
 			
 			// 如果容器或元素还没准备好，重试
 			if (!container || !lineEl) {
-				setTimeout(attemptScroll, 10);
+				window.setTimeout(attemptScroll, 10);
 				return;
 			}
 
 			// 如果容器高度为0，重试
 			if (container.clientHeight === 0) {
-				setTimeout(attemptScroll, 10);
+				window.setTimeout(attemptScroll, 10);
 				return;
 			}
 
@@ -202,7 +202,7 @@ export function useLyricsAutoScroll({
 				}
 			} else {
 				// 如果第一次失败，再试一次
-				setTimeout(() => {
+				window.setTimeout(() => {
 					jumpLineToCenterAbove(playingIndex);
 					isInitialScrollRef.current = false;
 					if (onInitialMountComplete) {
@@ -213,8 +213,8 @@ export function useLyricsAutoScroll({
 		};
 
 		// 使用 requestAnimationFrame 确保 DOM 已渲染
-		requestAnimationFrame(() => {
-			requestAnimationFrame(() => {
+		window.requestAnimationFrame(() => {
+			window.requestAnimationFrame(() => {
 				attemptScroll();
 			});
 		});

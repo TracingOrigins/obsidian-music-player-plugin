@@ -9,6 +9,7 @@
 
 import { TFile } from "obsidian";
 import { LibraryService, PlaylistService } from "./index";
+import type { MusicPlayerSettings } from "@/types";
 import { formatCurrentList as formatCurrentListUtil } from "@/utils/list/formatter";
 import { sortTracksByTrack } from "@/utils/data/sort";
 import { getOrCreateTrackId } from "@/utils/track/id";
@@ -44,7 +45,7 @@ export class ListService {
 	constructor(
 		private libraryService: LibraryService,
 		private playlistService: PlaylistService,
-		private plugin: any
+		private plugin: { settings: MusicPlayerSettings }
 	) {}
 
 	/**

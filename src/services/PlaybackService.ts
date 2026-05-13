@@ -141,16 +141,16 @@ export class PlaybackService {
 			const img = new Image();
 			
 			// 设置超时，避免长时间等待
-			const timeout = setTimeout(() => {
+			const timeout = window.setTimeout(() => {
 				resolve(); // 超时后也继续，避免阻塞动画
 			}, 2000); // 2秒超时
 
 			img.onload = () => {
-				clearTimeout(timeout);
+				window.clearTimeout(timeout);
 				resolve();
 			};
 			img.onerror = () => {
-				clearTimeout(timeout);
+				window.clearTimeout(timeout);
 				resolve(); // 即使加载失败也继续，避免阻塞动画
 			};
 			
@@ -159,7 +159,7 @@ export class PlaybackService {
 			
 			// 如果图片已经在缓存中，complete 会立即变为 true
 			if (img.complete) {
-				clearTimeout(timeout);
+				window.clearTimeout(timeout);
 				resolve();
 			}
 		});
@@ -256,7 +256,9 @@ export class PlaybackService {
 		// 如果 delayPlay 为 true，等待动画完成
 		if (delayPlay) {
 			// 等待动画时间（封面滑入动画）
-			await new Promise(resolve => setTimeout(resolve, ANIMATION_TIMINGS.DISC_ANIMATION_DURATION + ANIMATION_TIMINGS.DISC_ANIMATION_BUFFER));
+			await new Promise(resolve =>
+				window.setTimeout(resolve, ANIMATION_TIMINGS.DISC_ANIMATION_DURATION + ANIMATION_TIMINGS.DISC_ANIMATION_BUFFER)
+			);
 			
 			// 动画完成后，清除临时存储的封面 URL
 			if (direction === "prev") {

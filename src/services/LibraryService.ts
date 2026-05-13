@@ -13,7 +13,7 @@ import MusicPlayerPlugin from "@/main";
 import { rebuildAllData as updateMusicLibrary } from "@/utils/library/updater";
 import { scanVaultAudioFiles } from "@/utils/library/scanVaultAudio";
 import { sortTracksByTrack } from "@/utils/data/sort";
-import { SUPPORTED_AUDIO_FORMATS } from "@/constants";
+import { isSupportedAudioExtension } from "@/constants";
 import { StateService } from "./StateService";
 import { PlaylistService } from "./PlaylistService";
 import { LyricsService } from "./LyricsService";
@@ -466,7 +466,7 @@ export class LibraryService {
 			}
 
 			const ext = newFile.extension?.toLowerCase() || '';
-			if (!SUPPORTED_AUDIO_FORMATS.includes(`.${ext}` as any)) {
+			if (!isSupportedAudioExtension(ext)) {
 				console.warn(`新路径不是音乐文件，跳过重命名: ${oldPath} -> ${newPath}`);
 				return;
 			}
@@ -586,7 +586,7 @@ export class LibraryService {
 
 			// 2. 检查是否是音乐文件
 			const ext = file.extension?.toLowerCase() || '';
-			if (!SUPPORTED_AUDIO_FORMATS.includes(`.${ext}` as any)) {
+			if (!isSupportedAudioExtension(ext)) {
 				console.warn(`不是音乐文件，跳过更新: ${trackPath}`);
 				return;
 			}
@@ -617,9 +617,7 @@ export class LibraryService {
 				year: audioMetadata.year,
 				genre: Array.isArray(audioMetadata.genre) ? 
 					audioMetadata.genre[0] : audioMetadata.genre,
-				track: typeof audioMetadata.track === 'number' 
-					? audioMetadata.track 
-					: (audioMetadata.track as any)?.no || undefined,
+				track: audioMetadata.track,
 				duration: audioMetadata.duration
 			};
 

@@ -17,7 +17,7 @@ initBufferPolyfill();
 
 import { App, TFile } from "obsidian";
 import { IAudioMetadata, parseBuffer } from "music-metadata-browser";
-import { SUPPORTED_AUDIO_FORMATS } from "@/constants/audio";
+import { isSupportedAudioExtension } from "@/constants/audio";
 
 /**
  * 从原生标签中提取文本值的辅助函数
@@ -31,11 +31,17 @@ import { SUPPORTED_AUDIO_FORMATS } from "@/constants/audio";
  * @returns 提取的文本值，如果未找到则返回 undefined
  */
 function extractTextFromNativeTags(
-	native: Record<string, any[]> | undefined,
+	native: IAudioMetadata["native"] | undefined,
 	idMatcher: (id: string, upperId: string) => boolean,
 	descriptionMatcher?: (description: string) => boolean
 ): string | undefined {
 	if (!native) return undefined;
+
+	const descriptionFromUnknown = (v: unknown): string => {
+		if (typeof v !== "object" || v === null || !("description" in v)) return "";
+		const d = (v as { description?: unknown }).description;
+		return typeof d === "string" ? d : "";
+	};
 
 	// 遍历所有格式（ID3v2、Vorbis、APEv2 等）
 	for (const format of Object.keys(native)) {
@@ -44,12 +50,12 @@ function extractTextFromNativeTags(
 		for (const tag of nativeTags) {
 			const id = String(tag.id || "");
 			const upperId = id.toUpperCase();
-			const value: any = tag.value;
+			const value: unknown = tag.value as unknown;
 
 			// 检查是否匹配
 			const isMatched = idMatcher(id, upperId);
 			if (!isMatched && descriptionMatcher) {
-				const desc = value?.description || "";
+				const desc = descriptionFromUnknown(value);
 				if (!descriptionMatcher(desc)) continue;
 			}
 
@@ -68,12 +74,27 @@ function extractTextFromNativeTags(
 				return value.join("\n");
 			}
 			// 格式2：对象中包含 text 属性（字符串）
-			else if (value && typeof value.text === "string" && (isMatched || (descriptionMatcher && descriptionMatcher(value.description || "")))) {
-				return value.text;
+			else if (
+				value !== null &&
+				typeof value === "object" &&
+				typeof (value as { text?: unknown }).text === "string" &&
+				(isMatched ||
+					(descriptionMatcher && descriptionMatcher(descriptionFromUnknown(value))))
+			) {
+				return (value as { text: string }).text;
 			}
 			// 格式3：对象中包含 text 属性（数组）
-			else if (value && Array.isArray(value.text) && (isMatched || (descriptionMatcher && descriptionMatcher(value.description || "")))) {
-				return value.text.join("\n");
+			else if (value !== null && typeof value === "object") {
+				const textProp = (value as { text?: unknown }).text;
+				if (
+					Array.isArray(textProp) &&
+					textProp.length > 0 &&
+					textProp.every((item): item is string => typeof item === "string") &&
+					(isMatched ||
+						(descriptionMatcher && descriptionMatcher(descriptionFromUnknown(value))))
+				) {
+					return textProp.join("\n");
+				}
 			}
 		}
 	}
@@ -342,9 +363,9 @@ export async function getEmbeddedAudioMetadataFromBuffer(
 	} catch (e) {
 		// 如果解析失败，记录详细错误信息以便调试（特别是在移动端）
 		const errorMessage = e instanceof Error ? e.message : String(e);
-		const errorDetails: any = {
+		const errorDetails: Record<string, unknown> = {
 			error: errorMessage,
-			bufferSize: buffer?.byteLength || 0,
+			bufferSize: buffer?.byteLength ?? 0,
 			bufferType: buffer ? (buffer instanceof ArrayBuffer ? 'ArrayBuffer' : typeof buffer) : 'null/undefined'
 		};
 		
@@ -387,7 +408,7 @@ export async function getEmbeddedCoverFromFile(
 	try {
 		// 检查是否为支持的音频格式
 		const ext = file.extension?.toLowerCase() || '';
-		if (!SUPPORTED_AUDIO_FORMATS.includes(`.${ext}` as any)) {
+		if (!isSupportedAudioExtension(ext)) {
 			return undefined;
 		}
 
