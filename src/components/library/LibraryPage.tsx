@@ -18,6 +18,7 @@ import { IconButton } from "@/components/shared/IconButton";
 import { LibraryTabs, type TabId } from "@/components/library/LibraryTabs";
 import { TrackList } from "@/components/library/TrackList";
 import "./LibraryPage.css";
+import { t } from "@/utils/i18n/i18n";
 
 /**
  * 音乐库页面组件的属性接口
@@ -74,7 +75,7 @@ function AddPlaylistButton({ onClick }: { onClick: () => void }) {
 			<div
 				ref={iconRef}
 				className="add-playlist-icon clickable-icon"
-				aria-label="新建歌单"
+				aria-label={t("library.newPlaylist")}
 				onClick={onClick}
 			/>
 		</div>
@@ -135,9 +136,9 @@ export function LibraryPage(props: LibraryPageProps) {
 			<div className="section-list">
 				{!list.length ? (
 					type === "playlists" ? (
-						<div className="empty">暂无歌单</div>
+						<div className="empty">{t("library.empty.noPlaylists")}</div>
 					) : (
-						<div className="empty">暂无数据</div>
+						<div className="empty">{t("library.empty.noData")}</div>
 					)
 				) : null}
 				{list.map((item) => {
@@ -156,7 +157,7 @@ export function LibraryPage(props: LibraryPageProps) {
 								<div className="section-header-left">
 									<IconButton
 										icon={isCollapsed ? "chevron-right" : "chevron-down"}
-										label={isCollapsed ? "展开" : "折叠"}
+										label={isCollapsed ? t("library.expand") : t("library.collapse")}
 										className="section-action-btn clickable-icon"
 										onClick={(e) => {
 											e.stopPropagation();
@@ -180,7 +181,7 @@ export function LibraryPage(props: LibraryPageProps) {
 									{type === "playlists" && props.onEditPlaylist ? (
 										<IconButton
 											icon="pencil"
-											label="重命名歌单"
+											label={t("library.renamePlaylist")}
 											className="section-action-btn clickable-icon"
 											onClick={() => {
 												void props.onEditPlaylist?.(item.name);
@@ -190,7 +191,7 @@ export function LibraryPage(props: LibraryPageProps) {
 									{type === "playlists" && props.onDeletePlaylist ? (
 										<IconButton
 											icon="trash-2"
-											label="删除歌单"
+											label={t("library.deletePlaylist")}
 											className="section-action-btn clickable-icon"
 											onClick={() => {
 												void props.onDeletePlaylist?.(item.name);
@@ -199,7 +200,7 @@ export function LibraryPage(props: LibraryPageProps) {
 									) : null}
 									<IconButton
 										icon="play-circle"
-										label="播放此分类"
+										label={t("library.playCategory")}
 										className="section-action-btn clickable-icon"
 										onClick={() =>
 											props.onPlayCategory(categoryType, item.name, item.tracks)
@@ -225,7 +226,7 @@ export function LibraryPage(props: LibraryPageProps) {
 										app={props.app}
 									/>
 								) : (
-									<div className="empty">暂无歌曲</div>
+									<div className="empty">{t("library.empty.noTracks")}</div>
 								)
 							) : null}
 						</div>
@@ -264,7 +265,7 @@ export function LibraryPage(props: LibraryPageProps) {
 							app={props.app}
 						/>
 					) : (
-						<div className="empty">暂无歌曲</div>
+						<div className="empty">{t("library.empty.noTracks")}</div>
 					)
 				) : null}
 

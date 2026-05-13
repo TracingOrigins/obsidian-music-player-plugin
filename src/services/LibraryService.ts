@@ -19,7 +19,6 @@ import { LyricsService } from "./LyricsService";
 import type { CurrentList } from "./ListService";
 import { generateArtistsAndAlbums } from "@/utils/data/transform";
 import { getOrCreateTrackId, getTrackPath } from "@/utils/track/id";
-
 export interface LibraryOrchestrationCallbacks {
 	/** 库更新时的回调 */
 	onLibraryUpdated?: () => Promise<void>;
@@ -246,13 +245,7 @@ export class LibraryService {
 				};
 			})
 			.filter((artist) => artist.tracks.length > 0) // 过滤掉没有歌曲的艺术家
-			.sort((a, b) => {
-				const unknownArtist = "未知艺术家";
-				// 未知艺术家排在最后
-				if (a.name === unknownArtist) return 1;
-				if (b.name === unknownArtist) return -1;
-				return a.name.localeCompare(b.name, "zh-Hans-CN");
-			});
+			.sort((a, b) => a.name.localeCompare(b.name, "zh-Hans-CN"));
 	}
 
 	/**
@@ -279,13 +272,7 @@ export class LibraryService {
 				};
 			})
 			.filter((album) => album.tracks.length > 0) // 过滤掉没有歌曲的专辑
-			.sort((a, b) => {
-				const unknownAlbum = "未知专辑";
-				// 未知专辑排在最后
-				if (a.name === unknownAlbum) return 1;
-				if (b.name === unknownAlbum) return -1;
-				return a.name.localeCompare(b.name, "zh-Hans-CN");
-			});
+			.sort((a, b) => a.name.localeCompare(b.name, "zh-Hans-CN"));
 	}
 
 	/**
@@ -633,8 +620,8 @@ export class LibraryService {
 			const trackId = getOrCreateTrackId(trackPath, this.plugin.settings);
 			this.plugin.settings.tracks[trackId] = {
 				title: audioMetadata.title || file.basename,
-				artist: audioMetadata.artist || '未知艺术家',
-				album: audioMetadata.album || '未知专辑',
+				artist: audioMetadata.artist?.trim() || '',
+				album: audioMetadata.album?.trim() || '',
 				lyrics: audioMetadata.lyricsText || '',
 				year: audioMetadata.year,
 				genre: Array.isArray(audioMetadata.genre) ? 

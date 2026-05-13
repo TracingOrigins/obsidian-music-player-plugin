@@ -23,6 +23,7 @@ import React from "react";
 import "./AlbumDisc.css";
 import { DISC_IMAGE, NEEDLE_IMAGE } from "@/assets/images";
 import { useDiscRotation } from "@/hooks/useDiscRotation";
+import { t } from "@/utils/i18n/i18n";
 import { useDiscSwitchAnimation } from "@/hooks/useDiscSwitchAnimation";
 
 /**
@@ -150,7 +151,7 @@ export function AlbumDisc({ coverUrl, trackKey, isPlaying, onPrev, onNext, onTog
 				<div className={`needle ${isNeedlePlaying ? "playing" : ""}`}>
 					<img
 						src={needleImage}
-						alt="唱针"
+						alt={t("a11y.tonearm")}
 						className="needle-image"
 					/>
 				</div>
@@ -171,7 +172,7 @@ export function AlbumDisc({ coverUrl, trackKey, isPlaying, onPrev, onNext, onTog
 				>
 					<img
 						src={discImage}
-						alt="黑胶唱片"
+						alt={t("a11y.vinyl")}
 						className="disc-background"
 					/>
 					<div 
@@ -203,7 +204,7 @@ export function AlbumDisc({ coverUrl, trackKey, isPlaying, onPrev, onNext, onTog
 					{/* 黑胶唱片背景图片 */}
 					<img
 						src={discImage}
-						alt="黑胶唱片"
+						alt={t("a11y.vinyl")}
 						className="disc-background"
 					/>
 
@@ -238,7 +239,7 @@ export function AlbumDisc({ coverUrl, trackKey, isPlaying, onPrev, onNext, onTog
 						{/* 黑胶唱片背景图片 */}
 						<img
 							src={discImage}
-							alt="黑胶唱片"
+							alt={t("a11y.vinyl")}
 							className="disc-background"
 						/>
 
@@ -276,7 +277,7 @@ export function AlbumDisc({ coverUrl, trackKey, isPlaying, onPrev, onNext, onTog
 				>
 					<img
 						src={discImage}
-						alt="黑胶唱片"
+						alt={t("a11y.vinyl")}
 						className="disc-background"
 					/>
 					<div 

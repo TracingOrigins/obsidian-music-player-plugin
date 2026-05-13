@@ -8,6 +8,7 @@
 import { App } from "obsidian";
 import { BaseModal } from "./BaseModal";
 import "./ConfirmModal.css";
+import { t } from "@/utils/i18n/i18n";
 
 /**
  * 确认对话框类
@@ -16,6 +17,8 @@ import "./ConfirmModal.css";
  * 用于需要用户确认的操作，如删除歌单等。
  */
 export class ConfirmModal extends BaseModal<boolean> {
+	private confirmText: string;
+	private cancelText: string;
 
 	/**
 	 * 构造函数
@@ -23,17 +26,19 @@ export class ConfirmModal extends BaseModal<boolean> {
 	 * @param app Obsidian 应用实例
 	 * @param title 对话框标题
 	 * @param message 提示消息文本
-	 * @param confirmText 确认按钮文本，默认为 "确定"
-	 * @param cancelText 取消按钮文本，默认为 "取消"
+	 * @param confirmText 确认按钮文本
+	 * @param cancelText 取消按钮文本
 	 */
 	constructor(
 		app: App,
-		private title: string,
+		title: string,
 		private message: string,
-		private confirmText: string = "确定",
-		private cancelText: string = "取消"
+		confirmText?: string,
+		cancelText?: string
 	) {
 		super(app, title);
+		this.confirmText = confirmText ?? t("common.ok");
+		this.cancelText = cancelText ?? t("common.cancel");
 	}
 
 	/**

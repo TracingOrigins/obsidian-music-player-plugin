@@ -15,6 +15,7 @@ import { createPortal } from "react-dom";
 import { Platform, TFile } from "obsidian";
 import "./MusicPlayerRoot.css";
 import { ConfirmModal, LibraryPage, NavigationBar, PlayPage } from "@/components";
+import { t } from "@/utils/i18n/i18n";
 import {
 	useLibraryManagement,
 	useLibraryState,
@@ -68,27 +69,12 @@ export function MusicPlayerRoot({ view, navHost }: MusicPlayerRootProps) {
 		// 如果正在重建，直接返回
 		if (isRebuildingRef.current) return;
 
-		const message = [
-			"将会完全重建音乐库的所有数据：",
-			"",
-			"1. 重新扫描所有音乐文件",
-			"2. 重新提取标题、艺术家、专辑、歌词等元数据",
-			"3. 重新生成艺术家和专辑分类",
-			"4. 清理收藏列表和歌单中的无效项",
-			"5. 完全重写插件的数据文件",
-			"",
-			"根据音乐文件数量，这个过程可能需要几十秒到数分钟不等，",
-			"在此期间播放器可能会变慢或短暂无响应，但不会影响原始音频文件。",
-			"",
-			"确定现在开始重建吗？",
-		].join("\n");
+		const message = t("rebuild.body");
 
 		const modal = new ConfirmModal(
 			view.app,
-			"重建音乐库数据",
-			message,
-			"确定",
-			"取消"
+			t("rebuild.title"),
+			message
 		);
 		const confirmed = await modal.prompt();
 		if (!confirmed) return;

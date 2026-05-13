@@ -12,6 +12,7 @@ import React from "react";
 import "./LyricsFull.css";
 import type { LyricLine } from "@/utils/lyrics/parser";
 import { LyricsParser } from "@/utils/lyrics/parser";
+import { t } from "@/utils/i18n/i18n";
 
 /**
  * 完整歌词列表组件的属性接口
@@ -54,7 +55,7 @@ export function LyricsFull({
 	if (!fullLyrics || fullLyrics.length === 0) {
 		return (
 			<div className="lyrics lyrics-empty">
-				<span className="lyrics-empty-text">暂无歌词</span>
+				<span className="lyrics-empty-text">{t("playback.noLyrics")}</span>
 			</div>
 		);
 	}

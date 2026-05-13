@@ -17,6 +17,7 @@ import MusicPlayerPlugin from "@/main";
 import { getEmbeddedAudioMetadataFromBuffer, readAudioFileBinary } from "../audio/metadata";
 import { generateArtistsAndAlbums } from "../data/transform";
 import { SUPPORTED_AUDIO_FORMATS } from "@/constants";
+import { t, tWithParams } from "@/utils/i18n/i18n";
 
 /**
  * 重建所有数据
@@ -39,7 +40,7 @@ export async function rebuildAllData(
 	app: App,
 	plugin: MusicPlayerPlugin
 ): Promise<number> {
-	const notice = new Notice("正在扫描音乐文件并更新元数据...", 0);
+	const notice = new Notice(t("notice.scanning"), 0);
 	
 	try {
 		// 1. 获取所有文件并记录总数
@@ -73,7 +74,7 @@ export async function rebuildAllData(
 			plugin.settings.albums = {};
 			// 保存清空后的数据
 			await plugin.saveSettings();
-			new Notice("未找到任何音乐文件，已清空所有数据", 5000);
+			new Notice(t("notice.noMusicCleared"), 5000);
 			return 0;
 		}
 
@@ -94,7 +95,13 @@ export async function rebuildAllData(
 		// 6. 处理每个音乐文件
 		for (const file of filteredFiles) {
 			try {
-				notice.setMessage(`正在处理: ${file.basename} (${processed + 1}/${total})`);
+				notice.setMessage(
+					tWithParams("notice.processingFile", {
+						basename: file.basename,
+						current: processed + 1,
+						total,
+					})
+				);
 				
 				// 读取音频文件的二进制数据（兼容移动端）
 				const binary = await readAudioFileBinary(app, file);
@@ -124,8 +131,8 @@ export async function rebuildAllData(
 				
 				plugin.settings.tracks[trackId] = {
 					title: audioMetadata.title || file.basename,
-					artist: audioMetadata.artist || '未知艺术家',
-					album: audioMetadata.album || '未知专辑',
+				artist: audioMetadata.artist?.trim() || '',
+				album: audioMetadata.album?.trim() || '',
 					// 封面只从音频文件的元数据中提取内嵌封面，实时获取，不保存
 					// 歌词从音频文件的元数据标签中提取
 					lyrics: audioMetadata.lyricsText || '',
@@ -143,7 +150,7 @@ export async function rebuildAllData(
 				
 				// 每处理5个文件更新一次进度
 				if (processed % 5 === 0 || processed === total) {
-					notice.setMessage(`已处理 ${processed}/${total} 首曲目...`);
+					notice.setMessage(tWithParams("notice.progressTracks", { current: processed, total }));
 				}
 			} catch (error) {
 				console.error(`处理文件 ${file.path} 时出错:`, error);
@@ -152,13 +159,13 @@ export async function rebuildAllData(
 		}
 
 		// 7. 生成艺术家和专辑信息
-		notice.setMessage("正在生成艺术家和专辑信息...");
+		notice.setMessage(t("notice.generatingCategories"));
 		const { artists, albums } = generateArtistsAndAlbums(plugin.settings);
 		plugin.settings.artists = artists;
 		plugin.settings.albums = albums;
 
 		// 8. 清理无效的数据
-		notice.setMessage("正在清理无效的数据...");
+		notice.setMessage(t("notice.cleaningInvalid"));
 		const validTrackIds = new Set(Object.keys(plugin.settings.tracks));
 		
 		// 清理 trackIndex：只保留存在的曲目 ID
@@ -208,16 +215,16 @@ export async function rebuildAllData(
 		}
 
 		// 9. 保存设置到 data.json
-		notice.setMessage("正在保存数据...");
+		notice.setMessage(t("notice.saving"));
 		await plugin.saveSettings();
 
-		new Notice(`数据重建完成: 共处理 ${processed} 首歌曲`, 3000);
+		new Notice(tWithParams("notice.rebuildDone", { count: processed }), 3000);
 		
 		return processed;
 		
 	} catch (error) {
 		console.error("重建数据时出错:", error);
-		new Notice("重建数据时出错，请查看控制台", 5000);
+		new Notice(t("notice.rebuildError"), 5000);
 		throw error;
 	} finally {
 		// 关闭进度通知

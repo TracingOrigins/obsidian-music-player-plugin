@@ -13,6 +13,7 @@ import "./LyricsExtendedFull.css";
 import type { ExtendedLyricLine } from "@/utils/lyrics/extendedParser";
 import { linearFillProgress } from "@/utils/lyrics/charFillProgress";
 import { buildKaraokeUnits } from "@/utils/lyrics/karaokeUnits";
+import { t } from "@/utils/i18n/i18n";
 
 /**
  * 逐字时间歌词完整列表组件的属性接口
@@ -131,7 +132,7 @@ export function LyricsExtendedFull({
 	if (!fullLyrics || fullLyrics.length === 0) {
 		return (
 			<div className="lyrics-extended lyrics-extended-empty">
-				<span className="lyrics-extended-empty-text">暂无逐字歌词</span>
+				<span className="lyrics-extended-empty-text">{t("playback.noSyncedLyrics")}</span>
 			</div>
 		);
 	}

@@ -11,6 +11,7 @@
 import React from "react";
 import type { PlayMode } from "@/main";
 import { setIcon } from "obsidian";
+import { t } from "@/utils/i18n/i18n";
 
 /**
  * 播放控制组件的属性接口
@@ -33,16 +34,13 @@ export interface PlaybackControlsProps {
 }
 
 /**
- * 获取播放模式的中文标签
- * 
- * @param mode 播放模式
- * @returns 返回播放模式的中文标签
+ * 获取播放模式的无障碍标签
  */
 function playModeLabel(mode: PlayMode): string {
-	if (mode === "repeat-one") return "单曲循环";
-	if (mode === "repeat-all") return "列表循环";
-	if (mode === "shuffle") return "随机播放";
-	return "顺序播放";
+	if (mode === "repeat-one") return t("playback.mode.repeatOne");
+	if (mode === "repeat-all") return t("playback.mode.repeatAll");
+	if (mode === "shuffle") return t("playback.mode.shuffle");
+	return t("playback.mode.normal");
 }
 
 /**
@@ -104,24 +102,24 @@ export function PlaybackControls(props: PlaybackControlsProps) {
 				<div className="mode-tooltip">{playModeLabel(playMode)}</div>
 			</button>
 
-			<button ref={prevRef} className="play-control-btn clickable-icon" aria-label="上一首" onClick={onPrev}>
+			<button ref={prevRef} className="play-control-btn clickable-icon" aria-label={t("playback.prev")} onClick={onPrev}>
 			</button>
 
 			<button
 				ref={playPauseRef}
 				className="play-control-btn clickable-icon play-pause-btn"
 				onClick={onTogglePlay}
-				aria-label={isPlaying ? "暂停" : "播放"}
+				aria-label={isPlaying ? t("playback.pause") : t("playback.play")}
 			>
 			</button>
 
-			<button ref={nextRef} className="play-control-btn clickable-icon" aria-label="下一首" onClick={onNext}>
+			<button ref={nextRef} className="play-control-btn clickable-icon" aria-label={t("playback.next")} onClick={onNext}>
 			</button>
 
 			<button
 				ref={playlistRef}
 				className="play-control-btn clickable-icon"
-				aria-label="播放列表"
+				aria-label={t("playback.queue")}
 				onClick={onOpenPlaylist}
 			>
 			</button>

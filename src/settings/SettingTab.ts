@@ -6,6 +6,7 @@
 
 import { App, PluginSettingTab, Setting } from 'obsidian';
 import MusicPlayerPlugin from '@/main';
+import { t } from '@/utils/i18n/i18n';
 import { MusicPlayerView, VIEW_TYPE_MUSIC_PLAYER } from '@/views/MusicPlayerView';
 import { FolderSuggest } from '@/components/shared/FolderSuggest';
 
@@ -46,19 +47,19 @@ export class MusicPlayerSettingTab extends PluginSettingTab {
 
 		// 创建音乐文件夹设置项（使用 setHeading 创建标题）
 		new Setting(containerEl)
-			.setName('音乐播放器设置')
+			.setName(t('settings.heading'))
 			.setHeading();
 		
 		new Setting(containerEl)
-			.setName('音乐文件夹')
-			.setDesc('指定包含音乐文件的文件夹路径（相对于仓库根目录，留空则扫描整个仓库）。')
+			.setName(t('settings.musicFolder.name'))
+			.setDesc(t('settings.musicFolder.desc'))
 			.addText(text => {
 				const inputEl = text.inputEl;
 				// 创建文件夹建议器，在输入框下方显示文件夹列表
 				new FolderSuggest(this.app, inputEl);
 				
 				text
-					.setPlaceholder('输入或选择文件夹路径')
+					.setPlaceholder(t('settings.musicFolder.placeholder'))
 					.setValue(this.plugin.settings.musicFolder)
 					.onChange(async (value) => {
 						// 保存用户输入的音乐文件夹路径
@@ -74,8 +75,8 @@ export class MusicPlayerSettingTab extends PluginSettingTab {
 
 		// 创建自动播放设置项
 		new Setting(containerEl)
-			.setName('打开时自动播放')
-			.setDesc('启用后，打开音乐播放器时会自动播放第一首歌曲')
+			.setName(t('settings.autoPlay.name'))
+			.setDesc(t('settings.autoPlay.desc'))
 			.addToggle(toggle => toggle
 				.setValue(this.plugin.settings.autoPlayOnOpen ?? false)
 				.onChange(async (value) => {

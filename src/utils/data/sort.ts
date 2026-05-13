@@ -29,7 +29,7 @@ export function sortTracksByTrack(
 		// 通过路径获取 ID，然后通过 ID 获取 track 信息
 		const trackId = getOrCreateTrackId(file.path, settings);
 		const track = settings.tracks[trackId];
-		const album = track?.album || "未知专辑";
+		const album = (track?.album ?? "").trim();
 		if (!albumMap.has(album)) {
 			albumMap.set(album, []);
 		}
@@ -39,12 +39,7 @@ export function sortTracksByTrack(
 	// 对每个专辑内的曲目按音轨号排序
 	const sortedTracks: TFile[] = [];
 	Array.from(albumMap.entries())
-		.sort((a, b) => {
-			// 未知专辑排在最后
-			if (a[0] === "未知专辑") return 1;
-			if (b[0] === "未知专辑") return -1;
-			return a[0].localeCompare(b[0], "zh-Hans-CN");
-		})
+		.sort((a, b) => a[0].localeCompare(b[0], "zh-Hans-CN"))
 		.forEach(([album, albumTracks]) => {
 			// 同一专辑内按音轨号排序
 			const sortedAlbumTracks = albumTracks.sort((a, b) => {

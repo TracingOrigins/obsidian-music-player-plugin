@@ -24,10 +24,12 @@ export class ViewSetupService {
 	 */
 	setupView(containerEl: HTMLElement, view: MusicPlayerView): ViewSetupResult {
 		const leafContent = containerEl.closest(".workspace-leaf-content");
+		leafContent?.addClass('music-player');
 		const viewHeaderEl = leafContent?.querySelector(".view-header") ?? containerEl.querySelector(".view-header");
 		const viewHeader = viewHeaderEl instanceof HTMLElement ? viewHeaderEl : null;
 		const viewContentEl = leafContent?.querySelector(".view-content") ?? containerEl.querySelector(".view-content");
 		const viewContent = viewContentEl instanceof HTMLElement ? viewContentEl : null;
+		viewContent?.addClass('music-player');
 
 		let container: HTMLElement | null = null;
 		if (viewHeader instanceof HTMLElement) {

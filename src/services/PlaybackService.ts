@@ -20,6 +20,7 @@ import { SnapshotService } from "./SnapshotService";
 import { findTrackIndexInGlobalList, getNextIndex, getPreviousIndex, handleTrackEnd } from "@/utils/playback/control";
 import { ANIMATION_TIMINGS } from "@/constants/ui";
 import type { PlayMode } from "@/main";
+import { t } from "@/utils/i18n/i18n";
 
 /**
  * 播放服务回调接口
@@ -465,7 +466,7 @@ export class PlaybackService {
 	async restoreLastPlayedTrack(autoPlay: boolean = true): Promise<void> {
 		const state = this.stateService.getState();
 		if (!state.trackList.length) return;
-		this.stateService.setCurrentList({ type: "all", name: "全部", tracks: state.trackList });
+		this.stateService.setCurrentList({ type: "all", name: t("list.all"), tracks: state.trackList });
 		this.stateService.setCurrentListId("all");
 		await this.playTrack(0, false, undefined, undefined, autoPlay);
 	}

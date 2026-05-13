@@ -14,6 +14,7 @@ import React from "react";
 import "./TrackActions.css";
 import { IconButton } from "@/components/shared/IconButton";
 import { setIcon } from "obsidian";
+import { t } from "@/utils/i18n/i18n";
 
 /**
  * 曲目操作组件的属性接口
@@ -160,7 +161,7 @@ export function TrackActions({
 			<div className="track-actions-left">
 				<IconButton
 					icon="list-plus"
-					label="添加到歌单"
+					label={t("track.addToPlaylist")}
 					className="track-action-btn clickable-icon"
 					onClick={handleAddToPlaylist}
 				/>
@@ -169,7 +170,7 @@ export function TrackActions({
 					<button
 						ref={playbackRateButtonRef}
 						className="track-action-btn clickable-icon playback-rate-btn"
-						aria-label="播放速度"
+						aria-label={t("playback.rate")}
 						onClick={handlePlaybackRateButtonClick}
 					/>
 					{isPlaybackRateMenuVisible && (
@@ -193,7 +194,7 @@ export function TrackActions({
 					<button
 						ref={volumeButtonRef}
 						className="track-action-btn clickable-icon volume-btn"
-						aria-label="音量"
+						aria-label={t("playback.volume")}
 						onClick={handleVolumeButtonClick}
 					/>
 					{isVolumeMenuVisible && (
@@ -213,7 +214,7 @@ export function TrackActions({
 
 				<IconButton
 					icon="heart"
-					label={isFavorite ? "取消收藏" : "添加到收藏"}
+					label={isFavorite ? t("track.removeFavorite") : t("track.addFavorite")}
 					className={`track-action-btn clickable-icon ${isFavorite ? "active" : ""}`}
 					onClick={handleToggleFavorite}
 				/>

@@ -1,13 +1,6 @@
 /**
- * 音乐库页面样式文件
- * 
- * 包含音乐库页面的所有样式，包括：
- * - 工具栏和标签页样式
- * - 歌曲列表样式
- * - 歌曲项样式（封面、标题、艺术家、专辑）
- * - 歌曲操作按钮样式
- * - 歌单、艺术家、专辑分类样式
- * - 移动端适配样式
+ * 音乐库页面样式（工具栏、列表、分区、曲目行）。
+ * 播放指示器外观见 PlayingIndicator.css。
  */
 
 /* ========== 页面容器 ========== */
@@ -18,46 +11,89 @@
 	min-height: 0;
 }
 
-/* ========== 工具栏样式 ========== */
+/* ========== 工具栏 / 标签栏 ========== */
 .music-player .toolbar {
 	display: flex;
-	align-items: center;
+	align-items: flex-end;
 	justify-content: center;
-	gap: 8px;
-	padding: 0 0 12px 0;
-	border-bottom: 1px solid var(--background-modifier-border);
-	flex-wrap: wrap;
+	min-width: 0;
 	flex-shrink: 0;
 	position: sticky;
 	top: 0;
+	z-index: 2;
+	box-sizing: border-box;
+	border-bottom: 1px solid var(--background-modifier-border);
+	padding: 0 2px;
+	overflow-x: auto;
+	flex-wrap: nowrap;
+	-webkit-overflow-scrolling: touch;
+	scrollbar-width: none;
+	-ms-overflow-style: none;
+}
+
+.music-player .toolbar::-webkit-scrollbar {
+	display: none;
 }
 
 .music-player .toolbar .tabs {
 	display: flex;
-	gap: 4px;
-	flex-wrap: wrap;
+	justify-content: center;
+	align-items: stretch;
+	flex-wrap: nowrap;
+	width: 100%;
+	min-width: min-content;
+	gap: 0;
 }
 
-.music-player .tab-btn {
-	padding: 4px 10px !important;
-	border-radius: 6px;
-	color: var(--text-muted);
-	cursor: pointer;
-	transition: all 0.2s ease;
-}
-
-.music-player .tab-btn.active {
-	color: var(--interactive-accent);
-	border-bottom: 2px solid var(--interactive-accent);
-}
-
-.music-player .tab-btn.active:hover {
-	color: var(--interactive-accent) !important;
-}
-
-.music-player .tab-playing-indicator {
+.music-player .library-tab {
 	display: inline-flex;
 	align-items: center;
+	justify-content: center;
+	padding: 8px;
+	border-radius: 6px 6px 0 0;
+	border-bottom: 2px solid transparent;
+	background: transparent;
+	color: var(--text-muted);
+	opacity: 0.8;
+	font-size: var(--font-ui-small);
+	font-weight: 400;
+	line-height: 1.25;
+	cursor: pointer;
+	user-select: none;
+	white-space: nowrap;
+	flex-shrink: 0;
+	box-sizing: border-box;
+	transition:
+		color 0.12s ease,
+		border-color 0.12s ease,
+		background-color 0.12s ease;
+}
+
+.music-player .library-tab:focus {
+	outline: none;
+}
+
+.music-player .library-tab:focus-visible {
+	outline: 2px solid var(--interactive-accent);
+	outline-offset: 2px;
+}
+
+.music-player .library-tab:hover {
+	/* opacity: 0.8; */
+	background: var(--background-modifier-hover);
+}
+
+.music-player .library-tab.active {
+	opacity: 1;
+	border-bottom-color: var(--interactive-accent);
+}
+
+.music-player .library-tab.active:hover {
+	background: var(--background-modifier-hover);
+}
+
+.music-player .tab-label {
+	display: inline-block;
 }
 
 .music-player .tab-body {
@@ -82,7 +118,7 @@
 	overflow-x: hidden;
 }
 
-/* ========== 歌曲项样式 ========== */
+/* ========== 曲目行 ========== */
 .music-player .track-item {
 	display: flex;
 	padding: 12px 16px;
@@ -144,7 +180,7 @@
 }
 
 .music-player .track-item.is-active:hover {
-	border-left: 3px solid var(--interactive-accent);
+	background: var(--background-modifier-hover);
 }
 
 .music-player .track-item.is-active .track-title {
@@ -152,14 +188,8 @@
 	font-weight: 600;
 }
 
-.music-player .track-item.is-active .track-sub {
-	color: var(--interactive-accent);
-}
-
-.music-player .track-item.is-active .track-artist {
-	color: var(--interactive-accent);
-}
-
+.music-player .track-item.is-active .track-sub,
+.music-player .track-item.is-active .track-artist,
 .music-player .track-item.is-active .track-album {
 	color: var(--interactive-accent);
 }
@@ -176,11 +206,6 @@
 	overflow: hidden;
 	text-overflow: ellipsis;
 	display: flex;
-	align-items: center;
-}
-
-.music-player .track-playing-indicator {
-	display: inline-flex;
 	align-items: center;
 }
 
@@ -231,18 +256,6 @@
 	fill: var(--interactive-accent);
 }
 
-.music-player .track-item .track-action-btn.track-action-fav.active {
-	color: var(--interactive-accent);
-}
-
-.music-player .track-item .track-action-btn.track-action-fav.active svg {
-	fill: currentColor;
-}
-
-.music-player .track-item .track-action-btn.active svg[data-icon="heart"] {
-	fill: var(--interactive-accent);
-}
-
 .music-player .empty {
 	text-align: center;
 	color: var(--text-muted);
@@ -264,7 +277,7 @@
 	font-weight: 600;
 }
 
-.music-player .section-title.is-active span:first-child {
+.music-player .section-header.is-active .section-title > span:first-child {
 	color: var(--interactive-accent);
 }
 
@@ -279,12 +292,6 @@
 .music-player .section-count {
 	color: var(--text-muted);
 	font-weight: 400;
-}
-
-.music-player .section-playing-indicator {
-	display: inline-flex;
-	align-items: center;
-	margin-right: 4px;
 }
 
 .music-player .section {
@@ -318,22 +325,6 @@
 	cursor: pointer;
 }
 
-.music-player .section-icon {
-	margin-right: 8px;
-	color: var(--text-muted);
-	display: flex;
-	align-items: center;
-	transition: transform 0.2s ease;
-}
-
-.music-player .section-header h3 {
-	margin: 0;
-	font-size: 15px;
-	font-weight: 500;
-	color: var(--text-normal);
-	flex: 1;
-}
-
 .music-player .section-actions {
 	display: flex;
 	align-items: center;
@@ -362,15 +353,10 @@
 	transition: background-color 0.2s ease, color 0.2s ease;
 }
 
-.music-player .section-action-btn:hover:not(.is-disabled) {
+.music-player .section-action-btn:hover {
 	color: var(--interactive-accent);
 	transform: scale(1.1);
 	background: transparent !important;
-}
-
-.music-player .section-action-btn.is-disabled {
-	opacity: 0.3;
-	cursor: not-allowed;
 }
 
 .music-player .add-playlist-btn {
@@ -393,7 +379,7 @@
 	width: 32px;
 	height: 32px;
 	border-radius: 6px;
-	transition: all 0.2s ease;
+	transition: color 0.2s ease;
 	background: transparent;
 }
 
@@ -404,7 +390,5 @@
 }
 
 .music-player .add-playlist-icon:hover {
-	background: transparent;
 	color: var(--interactive-accent);
 }
-

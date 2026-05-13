@@ -18,6 +18,8 @@ import type { ReactLibrarySnapshot, ReactPlaybackSnapshot } from "@/types";
 import { AssetService, AudioService, FavoriteService, LibraryService, ListenerService, ListService, LyricsService, PlaybackService, PlaylistService, ReactApiService, SnapshotService, StateService, ViewSetupService } from "@/services";
 import { togglePlayMode } from "@/utils/playback/control";
 import type { ReactApi } from "@/types";
+import { t, tWithParams } from "@/utils/i18n/i18n";
+import { formatListLabel } from "@/utils/list/formatter";
 
 /**
  * 音乐播放器视图的类型标识符
@@ -257,7 +259,7 @@ export class MusicPlayerView extends ItemView {
 	 * @returns 视图显示名称
 	 */
 	getDisplayText() {
-		return "音乐播放器";
+		return t("view.title");
 	}
 
 	/**
@@ -328,7 +330,9 @@ export class MusicPlayerView extends ItemView {
 			if (this.containerEl) {
 				const errorDiv = document.createElement("div");
 				errorDiv.setCssProps({ padding: "20px", color: "var(--text-error)" });
-				errorDiv.textContent = `音乐播放器初始化失败: ${error instanceof Error ? error.message : String(error)}`;
+				errorDiv.textContent = tWithParams("view.initFailed", {
+					detail: error instanceof Error ? error.message : String(error),
+				});
 				this.containerEl.appendChild(errorDiv);
 			}
 		}
@@ -361,15 +365,25 @@ export class MusicPlayerView extends ItemView {
 	public async openPlaylistSheet() {
 		// 打开播放列表前刷新库状态
 		await this.handleLibraryUpdated();
-		const { list, title } = this.listService.getCurrentPlaylistForTrack(
+		const { list } = this.listService.getCurrentPlaylistForTrack(
 			this.state.currentTrack,
 			this.state.currentList,
 			this.state.trackList,
 			this.state.favorites
 		);
 		if (list.length === 0) return;
+		const listId = this.listService.calculateCurrentListId(
+			this.state.currentTrack,
+			this.state.currentList,
+			this.state.trackList,
+			this.state.favorites
+		);
 		const modal = new QueueModal(this.app, this.plugin, list, this.state.currentTrack);
-		modal.setPlaceholder(`选择歌曲 (${title})`);
+		modal.setPlaceholder(
+			tWithParams("queue.placeholderWithContext", {
+				context: formatListLabel(listId),
+			})
+		);
 		const selectedFile = await modal.prompt();
 		if (selectedFile) {
 			// 清除 lastAction，直接更新封面，不显示动画
@@ -378,7 +392,7 @@ export class MusicPlayerView extends ItemView {
 			}
 			const success = await this.playbackService.playByPath(selectedFile.path);
 			if (!success) {
-				new Notice("选择的歌曲不存在，请尝试重建数据", 5000);
+				new Notice(t("notice.trackMissing"), 5000);
 			}
 		}
 	}
@@ -392,14 +406,18 @@ export class MusicPlayerView extends ItemView {
 		await this.refreshMusicList();
 		if (this.state.trackList.length === 0) return;
 		const modal = new TrackSearchModal(this.app, this.plugin, this.state.trackList, this.state.currentTrack);
-		modal.setPlaceholder("搜索曲目、艺术家、专辑...");
+		modal.setPlaceholder(t("search.placeholder"));
 		const selectedFile = await modal.prompt();
 		if (selectedFile) {
 			// 清除 lastAction，直接更新封面，不显示动画
 			if (this.onDirectPlayCallback) {
 				this.onDirectPlayCallback();
 			}
-			this.stateService.setCurrentList({ type: "all", name: "全部", tracks: this.state.trackList });
+			this.stateService.setCurrentList({
+				type: "all",
+				name: t("list.all"),
+				tracks: this.state.trackList,
+			});
 			this.stateService.setCurrentListId("all");
 			await this.playbackService.playByPath(selectedFile.path);
 		}

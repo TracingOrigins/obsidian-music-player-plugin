@@ -4,15 +4,15 @@
  * 负责管理播放列表相关的业务逻辑，包括：
  * - 获取当前播放列表
  * - 格式化列表标识
- * - 解析列表标识
  * - 根据 sectionId 设置当前列表
  */
 
 import { TFile } from "obsidian";
 import { LibraryService, PlaylistService } from "./index";
-import { formatCurrentList as formatCurrentListUtil, parseCurrentList as parseCurrentListUtil } from "@/utils/list/formatter";
+import { formatCurrentList as formatCurrentListUtil } from "@/utils/list/formatter";
 import { sortTracksByTrack } from "@/utils/data/sort";
 import { getOrCreateTrackId } from "@/utils/track/id";
+import { t } from "@/utils/i18n/i18n";
 
 /**
  * 当前列表接口
@@ -31,7 +31,7 @@ export interface CurrentList {
 /**
  * 列表管理服务类
  * 
- * 负责管理播放列表相关的业务逻辑，提供列表的获取、格式化、解析等功能。
+ * 负责管理播放列表相关的业务逻辑，提供列表的获取与格式化等功能。
  */
 export class ListService {
 	/**
@@ -60,41 +60,35 @@ export class ListService {
 	 * @param currentList - 当前列表上下文
 	 * @param trackList - 所有曲目列表
 	 * @param favorites - 收藏列表
-	 * @returns 包含列表和标题的对象
+	 * @returns 当前队列对应的曲目列表（已按设置排序）
 	 */
 	getCurrentPlaylistForTrack(
 		currentTrack: TFile | null,
 		currentList: CurrentList | null,
 		trackList: TFile[],
-		favorites: TFile[]
-	): { list: TFile[]; title: string } {
-		let list: TFile[] = trackList;
-		let title = "全部";
-
-		// 1. 优先使用用户点击的分类
+		_favorites: TFile[]
+	): { list: TFile[] } {
 		if (currentList && currentList.tracks.length > 0) {
-			list = currentList.tracks;
-			if (currentList.type === "favorites") {
-				title = "收藏";
-			} else if (currentList.type === "playlist") {
-				title = `歌单-${currentList.name}`;
-			} else if (currentList.type === "album") {
-				title = `专辑-${currentList.name}`;
-			} else if (currentList.type === "artist") {
-				title = `艺术家-${currentList.name}`;
-			}
-			return { list, title };
+			return { list: currentList.tracks };
 		}
-
-		// 2. 如果没有分类，按成员关系自动判断
 		if (!currentTrack) {
-			return { list, title };
+			return { list: trackList };
 		}
+		return { list: this.inferPlaylistFromTrack(currentTrack, trackList).list };
+	}
 
-		// 从 plugin.settings 直接读取最新数据
+	/**
+	 * 无显式「当前列表」时，按曲目所属歌单/收藏/全部推断列表与稳定 listId。
+	 */
+	private inferPlaylistFromTrack(
+		currentTrack: TFile,
+		trackList: TFile[]
+	): { list: TFile[]; listId: string } {
+		let list: TFile[] = trackList;
+		let listId = "all";
+
 		const path = currentTrack.path;
 		const playlistMap = this.plugin.settings.playlists || {};
-		// favorites 在设置中以 trackId 的形式存储，这里统一按 ID 处理
 		const favoriteIds = new Set(this.plugin.settings.favorites || []);
 
 		const inPlaylists: string[] = [];
@@ -105,32 +99,28 @@ export class ListService {
 		if (inPlaylists.length > 0) {
 			const first = inPlaylists[0];
 			if (!first) {
-				return { list: trackList, title }; // 理论上不会发生
+				return { list: trackList, listId };
 			}
 			const set = new Set(playlistMap[first] || []);
 			const filteredTracks = trackList.filter((f) => set.has(f.path));
-			// 对播放列表进行排序
 			list = sortTracksByTrack(filteredTracks, this.plugin.settings);
-			title = `歌单-${first}`;
+			listId = `playlist:${first}`;
 		} else {
-			// 通过 trackId 判断是否在收藏列表中
 			const trackId = getOrCreateTrackId(path, this.plugin.settings);
 			if (favoriteIds.has(trackId)) {
-				// 对收藏列表进行排序
 				const filteredTracks = trackList.filter((f) => {
 					const id = getOrCreateTrackId(f.path, this.plugin.settings);
 					return favoriteIds.has(id);
 				});
 				list = sortTracksByTrack(filteredTracks, this.plugin.settings);
-				title = "收藏";
+				listId = "favorites";
 			} else {
-				// 全部列表已经排序，直接使用
 				list = trackList;
-				title = "全部";
+				listId = "all";
 			}
 		}
 
-		return { list, title };
+		return { list, listId };
 	}
 
 	/**
@@ -142,16 +132,6 @@ export class ListService {
 	 */
 	formatCurrentList(type: string, name?: string): string {
 		return formatCurrentListUtil(type, name);
-	}
-
-	/**
-	 * 从 currentList 字符串解析播放列表信息
-	 * 
-	 * @param currentList - 列表标识符字符串（如 "all", "favorites", "playlist:xxx"）
-	 * @returns 包含类型和名称的对象
-	 */
-	parseCurrentList(currentList?: string): { type: string; name: string } {
-		return parseCurrentListUtil(currentList);
 	}
 
 	/**
@@ -177,10 +157,10 @@ export class ListService {
 	): CurrentList | null {
 		if (sectionId === "all") {
 			// 全部列表已经排序，直接返回
-			return { type: "all", name: "全部", tracks: trackList };
+			return { type: "all", name: t("list.all"), tracks: trackList };
 		} else if (sectionId === "favorites") {
 			// 收藏列表已经排序，直接返回
-			return { type: "favorites", name: "收藏", tracks: favorites };
+			return { type: "favorites", name: t("list.favorites"), tracks: favorites };
 		} else if (sectionId.startsWith("playlist-")) {
 			const playlistName = sectionId.replace("playlist-", "");
 			const playlistMap = this.playlistService.getPlaylistMap();
@@ -230,24 +210,14 @@ export class ListService {
 		currentTrack: TFile | null,
 		currentList: CurrentList | null,
 		trackList: TFile[],
-		favorites: TFile[]
+		_favorites: TFile[]
 	): string {
 		if (currentList) {
 			return this.formatCurrentList(currentList.type, currentList.name);
 		}
 		if (!currentTrack) return "all";
 
-		const { title } = this.getCurrentPlaylistForTrack(
-			currentTrack,
-			currentList,
-			trackList,
-			favorites
-		);
-		if (title === "收藏") return "favorites";
-		if (title.startsWith("歌单-")) return `playlist:${title.replace("歌单-", "")}`;
-		if (title.startsWith("专辑-")) return `album:${title.replace("专辑-", "")}`;
-		if (title.startsWith("艺术家-")) return `artist:${title.replace("艺术家-", "")}`;
-		return "all";
+		return this.inferPlaylistFromTrack(currentTrack, trackList).listId;
 	}
 
 	/**

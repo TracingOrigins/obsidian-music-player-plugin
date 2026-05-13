@@ -14,6 +14,7 @@
 import { App } from "obsidian";
 import MusicPlayerPlugin from "@/main";
 import { ConfirmModal, PlaylistPickerModal, TextInputModal } from "@/components";
+import { t, tWithParams } from "@/utils/i18n/i18n";
 
 /**
  * 歌单管理服务类
@@ -51,8 +52,7 @@ export class PlaylistService {
 	 * @returns 新创建的歌单名称，如果用户取消或名称已存在则返回 null
 	 */
 	async createPlaylist(): Promise<string | null> {
-		const promptText = "输入新歌单名称";
-		const modal = new TextInputModal(this.app, promptText);
+		const modal = new TextInputModal(this.app, t("playlist.promptNewName"));
 		const name = await modal.prompt();
 		if (!name) return null;
 		const trimmed = name.trim();
@@ -79,7 +79,7 @@ export class PlaylistService {
 		const playlistMap = this.getPlaylistMap();
 		if (!playlistMap[oldName]) return false;
 
-		const modal = new TextInputModal(this.app, "输入新歌单名称", oldName);
+		const modal = new TextInputModal(this.app, t("playlist.renamePrompt"), oldName);
 		const newName = await modal.prompt();
 		if (!newName) return false;
 		const trimmed = newName.trim();
@@ -114,10 +114,10 @@ export class PlaylistService {
 		// 显示确认对话框
 		const modal = new ConfirmModal(
 			this.app,
-			"删除歌单",
-			`确定要删除歌单 "${playlistName}" 吗？此操作不可撤销。`,
-			"确定",
-			"取消"
+			t("playlist.deleteTitle"),
+			tWithParams("playlist.deleteMessage", { name: playlistName }),
+			t("common.ok"),
+			t("common.cancel")
 		);
 		const confirmed = await modal.prompt();
 		
