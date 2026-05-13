@@ -3,7 +3,7 @@
 	"name": "Music Player",
 	"version": "1.2.0",
 	"minAppVersion": "1.12.4",
-	"description": "Play local music files from the vault in the sidebar",
+	"description": "Play local music files from the vault in the sidebar.",
 	"author": "Kevin",
 	"authorUrl": "https://github.com/TracingOrigins",
 	"fundingUrl": "https://support.TracingOrigins.top",
