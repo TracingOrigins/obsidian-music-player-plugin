@@ -178,6 +178,14 @@ export function LibraryPage(props: LibraryPageProps) {
 									className="section-actions"
 									onClick={(e) => e.stopPropagation()}
 								>
+									<IconButton
+										icon="play-circle"
+										label={t("library.playCategory")}
+										className="section-action-btn clickable-icon"
+										onClick={() =>
+											props.onPlayCategory(categoryType, item.name, item.tracks)
+										}
+									/>
 									{type === "playlists" && props.onEditPlaylist ? (
 										<IconButton
 											icon="pencil"
@@ -198,14 +206,6 @@ export function LibraryPage(props: LibraryPageProps) {
 											}}
 										/>
 									) : null}
-									<IconButton
-										icon="play-circle"
-										label={t("library.playCategory")}
-										className="section-action-btn clickable-icon"
-										onClick={() =>
-											props.onPlayCategory(categoryType, item.name, item.tracks)
-										}
-									/>
 								</div>
 							</div>
 							{!isCollapsed ? (
