@@ -57,6 +57,11 @@ export interface MusicPlayerSettings {
 	albums: Record<string, string[]>;
 	/** 打开时自动播放，默认为 false */
 	autoPlayOnOpen: boolean;
+	/**
+	 * 打开自动播放时要播的曲目在仓库中的路径（与 TFile.path 一致）。
+	 * 留空表示「全部」列表按当前排序后的第一首。
+	 */
+	autoPlayOpenTrackPath: string;
 }
 
 /**
@@ -72,5 +77,6 @@ export const DEFAULT_SETTINGS: MusicPlayerSettings = {
 	artists: {},                // 默认没有艺术家数据
 	albums: {},                 // 默认没有专辑数据
 	autoPlayOnOpen: false,      // 默认不自动播放
+	autoPlayOpenTrackPath: '', // 默认：全部列表第一首
 };
 

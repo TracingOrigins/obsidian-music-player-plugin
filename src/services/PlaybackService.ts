@@ -19,6 +19,7 @@ import { type CurrentList, ListService } from "./ListService";
 import { SnapshotService } from "./SnapshotService";
 import { findTrackIndexInGlobalList, getNextIndex, getPreviousIndex, handleTrackEnd } from "@/utils/playback/control";
 import { ANIMATION_TIMINGS } from "@/constants/ui";
+import type MusicPlayerPlugin from "@/main";
 import type { PlayMode } from "@/main";
 import { t } from "@/utils/i18n/i18n";
 
@@ -60,6 +61,7 @@ export class PlaybackService {
 	/**
 	 * 创建播放服务实例
 	 * 
+	 * @param plugin - 插件实例（读取自动播放曲目等设置）
 	 * @param stateService - 状态管理服务
 	 * @param audioService - 音频服务
 	 * @param lyricsService - 歌词服务
@@ -68,6 +70,7 @@ export class PlaybackService {
 	 * @param callbacks - 回调函数集合
 	 */
 	constructor(
+		private plugin: MusicPlayerPlugin,
 		private stateService: StateService,
 		private audioService: AudioService,
 		private lyricsService: LyricsService,
@@ -468,7 +471,17 @@ export class PlaybackService {
 		if (!state.trackList.length) return;
 		this.stateService.setCurrentList({ type: "all", name: t("list.all"), tracks: state.trackList });
 		this.stateService.setCurrentListId("all");
-		await this.playTrack(0, false, undefined, undefined, autoPlay);
+
+		let index = 0;
+		const path = (this.plugin.settings.autoPlayOpenTrackPath ?? "").trim();
+		if (path) {
+			const found = state.trackList.findIndex((f) => f.path === path);
+			if (found >= 0) {
+				index = found;
+			}
+		}
+
+		await this.playTrack(index, false, undefined, undefined, autoPlay);
 	}
 }
 
