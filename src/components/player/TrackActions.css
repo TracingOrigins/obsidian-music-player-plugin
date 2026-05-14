@@ -34,14 +34,14 @@
 	justify-content: flex-end;
 }
 
-.music-player .track-action-btn {
+.music-player button.track-action-btn.clickable-icon {
 	display: flex;
 	align-items: center;
 	justify-content: center;
 	width: 32px;
 	height: 32px;
 	border: none;
-	background: transparent !important;
+	background: transparent;
 	border-radius: 50%;
 	cursor: pointer;
 	color: var(--icon-color);
@@ -50,40 +50,40 @@
 	position: relative;
 }
 
-.music-player .track-action-btn:hover {
+.music-player button.track-action-btn.clickable-icon:hover {
 	color: var(--interactive-accent);
 	transform: scale(1.1);
-	background: transparent !important;
+	background: transparent;
 }
 
-.music-player .track-action-btn:active {
-	background: transparent !important;
+.music-player button.track-action-btn.clickable-icon:active {
+	background: transparent;
 }
 
-.music-player .track-action-btn.active {
+.music-player button.track-action-btn.clickable-icon.active {
 	color: var(--interactive-accent);
-	background: transparent !important;
+	background: transparent;
 }
 
-.music-player .track-action-btn.active svg {
+.music-player button.track-action-btn.clickable-icon.active svg {
 	fill: var(--interactive-accent);
 }
 
-.music-player .track-action-btn.track-action-fav.active {
+.music-player button.track-action-btn.clickable-icon.track-action-fav.active {
 	color: var(--interactive-accent);
 }
 
-.music-player .track-action-btn.track-action-fav.active svg {
+.music-player button.track-action-btn.clickable-icon.track-action-fav.active svg {
 	fill: currentColor;
 }
 
 /* 心形按钮在收藏状态时使用主题色填充 */
-.music-player .track-action-btn.active svg[data-icon="heart"] {
+.music-player button.track-action-btn.clickable-icon.active svg[data-icon="heart"] {
 	fill: var(--interactive-accent);
 }
 
-.music-player .track-action-btn svg {
-	background: transparent !important;
+.music-player button.track-action-btn.clickable-icon svg {
+	background: transparent;
 }
 
 .music-player .volume-control-wrapper {

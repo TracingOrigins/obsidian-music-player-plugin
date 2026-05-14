@@ -353,10 +353,10 @@
 	transition: background-color 0.2s ease, color 0.2s ease;
 }
 
-.music-player .section-action-btn:hover {
+.music-player button.section-action-btn.clickable-icon:hover {
 	color: var(--interactive-accent);
 	transform: scale(1.1);
-	background: transparent !important;
+	background: transparent;
 }
 
 .music-player .add-playlist-btn {
