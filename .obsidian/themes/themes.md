@@ -1,7 +1,0 @@
-- AnuPpuccin
-- Blue Topaz
-- Composer
-- GitHub Theme
-- Minimal
-- Obsidian Nord
-- Things
