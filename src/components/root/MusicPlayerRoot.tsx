@@ -229,6 +229,8 @@ export function MusicPlayerRoot({ view, navHost }: MusicPlayerRootProps) {
 						onToggleMode={() => { void playbackControl.togglePlayMode(); }}
 						onOpenPlaylist={() => { void playbackControl.openPlaylistSheet(); }}
 						onSeek={playbackControl.seekToRatio}
+						onSeekBackward={playbackControl.seekBackward}
+						onSeekForward={playbackControl.seekForward}
 						prevCoverUrl={finalPrevCoverUrl}
 						nextCoverUrl={finalNextCoverUrl}
 						currentPath={playback.currentPath}

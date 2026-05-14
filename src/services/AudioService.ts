@@ -40,6 +40,27 @@ export class AudioService {
 	private currentHandlers: AudioEventHandlers | null = null;
 
 	/**
+	 * seek 完成后若已贴在媒体末尾（含解码对齐把 currentTime 推到 duration），
+	 * 部分环境不会触发 ended；此处补发与 ended 相同的回调。
+	 */
+	private readonly onSeekedEmitEndedIfAtClose = (): void => {
+		const el = this.audioElement;
+		const h = this.currentHandlers;
+		if (!el || !h) return;
+		const d = el.duration;
+		const t = el.currentTime;
+		if (!Number.isFinite(d) || d <= 0 || !Number.isFinite(t)) return;
+		if (el.ended) {
+			h.onEnded();
+			return;
+		}
+		// 解码对齐后可能停在 duration 却无法进入 ended；用极小余量判断“已在末尾”
+		if (t > 0.02 && t >= d - 1e-4) {
+			h.onEnded();
+		}
+	};
+
+	/**
 	 * 创建音频服务实例
 	 * 
 	 * @param app - Obsidian App 实例
@@ -88,6 +109,7 @@ export class AudioService {
 			this.audioElement.addEventListener("timeupdate", handlers.onTimeUpdate);
 			this.audioElement.addEventListener("loadedmetadata", handlers.onLoadedMetadata);
 			this.audioElement.addEventListener("ended", handlers.onEnded);
+			this.audioElement.addEventListener("seeked", this.onSeekedEmitEndedIfAtClose);
 
 			return this.audioElement;
 		} catch (error) {
@@ -105,14 +127,27 @@ export class AudioService {
 			this.audioElement.addEventListener("timeupdate", handlers.onTimeUpdate);
 			this.audioElement.addEventListener("loadedmetadata", handlers.onLoadedMetadata);
 			this.audioElement.addEventListener("ended", handlers.onEnded);
+			this.audioElement.addEventListener("seeked", this.onSeekedEmitEndedIfAtClose);
 
 			return this.audioElement;
 		}
 	}
 
 	/**
+	 * 将 seek 目标时间限制在 duration 略小处。
+	 * 若 currentTime 恰好等于 duration，常见实现不会触发 ended，且 play() 无法继续播放，表现为“卡死”。
+	 * ε 需足够大以吸收 MP3 等格式 seek 对齐把位置推到末尾的行为。
+	 */
+	private clampSeekTimeToPlayableEnd(time: number, duration: number): number {
+		if (!Number.isFinite(time) || !Number.isFinite(duration) || duration <= 0) return 0;
+		const epsilon = Math.min(0.28, Math.max(duration * 0.0025, 0.002));
+		const maxTime = Math.max(0, duration - epsilon);
+		return Math.min(Math.max(time, 0), maxTime);
+	}
+
+	/**
 	 * 根据文件扩展名获取 MIME 类型
-	 * 
+	 *
 	 * @param extension - 文件扩展名（不含点）
 	 * @returns MIME 类型字符串
 	 */
@@ -167,6 +202,7 @@ export class AudioService {
 				this.audioElement.removeEventListener("timeupdate", this.currentHandlers.onTimeUpdate);
 				this.audioElement.removeEventListener("loadedmetadata", this.currentHandlers.onLoadedMetadata);
 				this.audioElement.removeEventListener("ended", this.currentHandlers.onEnded);
+				this.audioElement.removeEventListener("seeked", this.onSeekedEmitEndedIfAtClose);
 			}
 
 			this.audioElement = null;
@@ -249,7 +285,8 @@ export class AudioService {
 		const clamped = Math.min(Math.max(ratio, 0), 1);
 		const duration = this.audioElement.duration;
 		if (!Number.isFinite(duration) || duration <= 0) return;
-		this.audioElement.currentTime = clamped * duration;
+		const target = clamped * duration;
+		this.audioElement.currentTime = this.clampSeekTimeToPlayableEnd(target, duration);
 	}
 
 	/**
@@ -259,11 +296,10 @@ export class AudioService {
 	 */
 	seekForward(seconds: number): void {
 		if (!this.audioElement) return;
-		const newTime = Math.min(
-			this.audioElement.currentTime + seconds,
-			this.audioElement.duration || 0
-		);
-		this.audioElement.currentTime = newTime;
+		const duration = this.audioElement.duration;
+		if (!Number.isFinite(duration) || duration <= 0) return;
+		const newTime = this.audioElement.currentTime + seconds;
+		this.audioElement.currentTime = this.clampSeekTimeToPlayableEnd(newTime, duration);
 	}
 
 	/**
