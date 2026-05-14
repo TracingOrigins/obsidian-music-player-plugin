@@ -40,6 +40,46 @@ function collectCssFiles(dir) {
 	return results;
 }
 
+/**
+ * 将 src/assets 下唱片 UI 的 PNG 转为 data URL，写入一段 CSS（打进 styles.css，不进 main.js）。
+ * 发布物仅需 main.js + styles.css + manifest.json 时仍可使用内联图，并减轻对 main.js 的误报扫描。
+ */
+function buildVinylEmbeddedCssFragment() {
+	const discPath = path.join(process.cwd(), "src", "assets", "disc.png");
+	const needlePath = path.join(process.cwd(), "src", "assets", "needle.png");
+	const rules = [];
+	if (fs.existsSync(discPath)) {
+		const b64 = fs.readFileSync(discPath).toString("base64");
+		rules.push(
+			`.music-player .disc-background.disc-background-embedded{background-image:url("data:image/png;base64,${b64}")}`,
+		);
+	} else {
+		console.warn(`⚠ 未找到 ${discPath}，唱片底图将缺失`);
+	}
+	if (fs.existsSync(needlePath)) {
+		const b64 = fs.readFileSync(needlePath).toString("base64");
+		rules.push(
+			`.music-player .needle-image.needle-image-embedded{background-image:url("data:image/png;base64,${b64}")}`,
+		);
+	} else {
+		console.warn(`⚠ 未找到 ${needlePath}，唱针图将缺失`);
+	}
+	return `/* vinyl assets: inlined from src/assets at build */\n${rules.join("\n")}\n`;
+}
+
+/** 内联进 styles.css 后不应再保留 dist 下的 PNG（避免误以为需随包发布） */
+function removeStaleVinylPngFromDist() {
+	const dir = path.join(process.cwd(), outDir);
+	for (const name of ["disc.png", "needle.png"]) {
+		const p = path.join(dir, name);
+		try {
+			if (fs.existsSync(p)) fs.unlinkSync(p);
+		} catch (e) {
+			console.warn(`⚠ 无法删除旧产物 ${p}: ${e?.message ?? e}`);
+		}
+	}
+}
+
 // ==================== 主要功能函数 ====================
 // 构建 CSS：将 src 下的所有 CSS 文件合并输出到 dist/styles.css
 // - 开发模式：合并并保留注释，便于阅读和调试
@@ -65,7 +105,7 @@ async function buildCSS() {
 		const content = fs.readFileSync(file, 'utf8');
 		return `/* ${rel} */\n${content}`;
 	});
-	const combinedCss = parts.join('\n\n');
+	const combinedCss = `${parts.join("\n\n")}\n\n${buildVinylEmbeddedCssFragment()}`;
 
 	try {
 		// 确保输出目录存在
@@ -145,8 +185,8 @@ function watchCSS() {
 
 	let buildTimer = null;
 	fs.watch(cssRoot, { recursive: true }, (eventType, filename) => {
-		// 只处理 CSS 文件的变化
-		if (filename && filename.endsWith('.css')) {
+		// CSS 或 src/assets 下 PNG 变化时重建 styles.css（含内联唱片资源）
+		if (filename && (filename.endsWith(".css") || filename.endsWith(".png"))) {
 			// 防抖：延迟 100ms 执行
 			if (buildTimer) {
 				clearTimeout(buildTimer);

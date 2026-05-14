@@ -1,7 +1,7 @@
 {
 	"name": "obsidian-music-player-plugin",
-	"version": "1.2.1",
-	"description": "在侧边栏播放 Obsidian 仓库中的本地音乐文件",
+	"version": "1.2.2",
+	"description": "Play local music files from the vault in the sidebar.",
 	"main": "main.js",
 	"type": "module",
 	"author": "Kevin",

@@ -100,6 +100,13 @@
 	transform-origin: 18px 10px;
 }
 
+.music-player .needle-image.needle-image-embedded {
+	object-fit: unset;
+	background-size: contain;
+	background-repeat: no-repeat;
+	background-position: center;
+}
+
 .music-player .album-container {
 	position: relative;
 	width: 300px;
@@ -121,6 +128,14 @@
 	pointer-events: none;
 	z-index: 0;
 	opacity: 0.9;
+}
+
+/* 由构建注入 background-image（data URL），替代 <img src>，大图不进 main.js */
+.music-player .disc-background.disc-background-embedded {
+	object-fit: unset;
+	background-size: contain;
+	background-repeat: no-repeat;
+	background-position: center;
 }
 
 .music-player .album-image {

@@ -21,7 +21,6 @@
 
 import React from "react";
 import "./AlbumDisc.css";
-import { DISC_IMAGE, NEEDLE_IMAGE } from "@/assets/images";
 import { useDiscRotation } from "@/hooks/useDiscRotation";
 import { t } from "@/utils/i18n/i18n";
 import { useDiscSwitchAnimation } from "@/hooks/useDiscSwitchAnimation";
@@ -136,10 +135,6 @@ export function AlbumDisc({ coverUrl, trackKey, isPlaying, onPrev, onNext, onTog
 		? { backgroundImage: `url("${displayCoverUrl}")` }
 		: {};
 
-	// 直接使用导入的图片常量
-	const discImage = DISC_IMAGE;
-	const needleImage = NEEDLE_IMAGE;
-
 	return (
 		<div className="album-container-wrapper">
 			{/* 固定的半透明背景 */}
@@ -149,10 +144,10 @@ export function AlbumDisc({ coverUrl, trackKey, isPlaying, onPrev, onNext, onTog
 			<div className="pan-container" ref={panContainerRef}>
 				{/* 唱针 - 相对于disc定位 */}
 				<div className={`needle ${isNeedlePlaying ? "playing" : ""}`}>
-					<img
-						src={needleImage}
-						alt={t("a11y.tonearm")}
-						className="needle-image"
+					<div
+						role="img"
+						aria-label={t("a11y.tonearm")}
+						className="needle-image needle-image-embedded"
 					/>
 				</div>
 				
@@ -170,10 +165,10 @@ export function AlbumDisc({ coverUrl, trackKey, isPlaying, onPrev, onNext, onTog
 						zIndex: -1,
 					}}
 				>
-					<img
-						src={discImage}
-						alt={t("a11y.vinyl")}
-						className="disc-background"
+					<div
+						role="img"
+						aria-label={t("a11y.vinyl")}
+						className="disc-background disc-background-embedded"
 					/>
 					<div 
 						className="album-image"
@@ -202,10 +197,10 @@ export function AlbumDisc({ coverUrl, trackKey, isPlaying, onPrev, onNext, onTog
 					}}
 				>
 					{/* 黑胶唱片背景图片 */}
-					<img
-						src={discImage}
-						alt={t("a11y.vinyl")}
-						className="disc-background"
+					<div
+						role="img"
+						aria-label={t("a11y.vinyl")}
+						className="disc-background disc-background-embedded"
 					/>
 
 					{/* 专辑封面 */}
@@ -237,10 +232,10 @@ export function AlbumDisc({ coverUrl, trackKey, isPlaying, onPrev, onNext, onTog
 						}}
 					>
 						{/* 黑胶唱片背景图片 */}
-						<img
-							src={discImage}
-							alt={t("a11y.vinyl")}
-							className="disc-background"
+						<div
+							role="img"
+							aria-label={t("a11y.vinyl")}
+							className="disc-background disc-background-embedded"
 						/>
 
 						{/* 专辑封面 */}
@@ -275,10 +270,10 @@ export function AlbumDisc({ coverUrl, trackKey, isPlaying, onPrev, onNext, onTog
 						zIndex: -1,
 					}}
 				>
-					<img
-						src={discImage}
-						alt={t("a11y.vinyl")}
-						className="disc-background"
+					<div
+						role="img"
+						aria-label={t("a11y.vinyl")}
+						className="disc-background disc-background-embedded"
 					/>
 					<div 
 						className="album-image"
