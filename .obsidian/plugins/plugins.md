@@ -1,0 +1,14 @@
+- Advanced Tables
+- BRAT
+- Buttons Panel
+- Chinese Calendar
+- Components
+- Folder notes
+- Hot Reload
+- Linter
+- Notebook Navigator
+- QuickAdd
+- Recent Files
+- Style Settings
+- Tag Wrangler
+- Templater

@@ -219,7 +219,7 @@
 
 ## 📄 许可证
 
-本项目采用 MIT 许可证 - 详情请参阅 [LICENSE](LICENSE) 文件。
+本项目采用 MIT 许可证 - 详情请参阅 [LICENSE](https://github.com/TracingOrigins/obsidian-music-player-plugin/blob/master/LICENSE) 文件。
 
 ---
 
@@ -231,5 +231,5 @@
 - 🐛 使用 [bug 报告模板](https://github.com/TracingOrigins/obsidian-music-player-plugin/issues/new?template=bug_report.md) 提交错误报告
 - 💡 使用 [功能请求模板](https://github.com/TracingOrigins/obsidian-music-player-plugin/issues/new?template=feature_request.md) 提交功能建议
 - ❓ 在我们的 [讨论区](https://github.com/TracingOrigins/obsidian-music-player-plugin/discussions) 提问或分享想法
-- 📝 参阅 [贡献指南](docs/contributing/contributing.zh.md)，为本项目贡献代码或文档
+- 📝 参阅 [贡献指南](https://github.com/TracingOrigins/obsidian-music-player-plugin/blob/master/docs/contributing/contributing.zh.md)，为本项目贡献代码或文档
 - 💰 为开发者提供[赞助](https://support.tracingorigins.top/zh)（如果可用）

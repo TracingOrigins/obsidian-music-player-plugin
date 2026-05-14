@@ -219,7 +219,7 @@ When the music player view is focused:
 
 ## 📄 License
 
-This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
+This project is licensed under the MIT License. See the [LICENSE](https://github.com/TracingOrigins/obsidian-music-player-plugin/blob/master/LICENSE) file for details.
 
 ---
 
@@ -231,5 +231,5 @@ If you find this plugin helpful, please consider:
 - 🐛 Using the [bug report template](https://github.com/TracingOrigins/obsidian-music-player-plugin/issues/new?template=bug_report.md) to submit bug reports.
 - 💡 Using the [feature request template](https://github.com/TracingOrigins/obsidian-music-player-plugin/issues/new?template=feature_request.md) to submit feature suggestions.
 - ❓ Asking questions or sharing ideas in our [Discussions](https://github.com/TracingOrigins/obsidian-music-player-plugin/discussions).
-- 📝 Referring to the [Contributing Guide](docs/contributing/contributing.md) to contribute code or documentation.
+- 📝 Referring to the [Contributing Guide](https://github.com/TracingOrigins/obsidian-music-player-plugin/blob/master/docs/contributing/contributing.md) to contribute code or documentation.
 - 💰 Providing [sponsorship](https://support.tracingorigins.top) to the developer (if available).
