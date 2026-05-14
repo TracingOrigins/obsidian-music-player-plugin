@@ -51,28 +51,29 @@ export function ProgressBar({ current, duration, onSeek, onSeekBackward, onSeekF
 	const dragActiveRef = React.useRef(false);
 	const [isDragging, setIsDragging] = React.useState(false);
 
-	const leftClickTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
-	const rightClickTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+	/** DOM 定时器 id（用 number 避免与 NodeJS.Timeout 在 tsc 下的冲突） */
+	const leftClickTimerRef = React.useRef<number | null>(null);
+	const rightClickTimerRef = React.useRef<number | null>(null);
 
 	React.useEffect(() => {
 		return () => {
-			if (leftClickTimerRef.current) clearTimeout(leftClickTimerRef.current);
-			if (rightClickTimerRef.current) clearTimeout(rightClickTimerRef.current);
+			if (leftClickTimerRef.current) window.clearTimeout(leftClickTimerRef.current);
+			if (rightClickTimerRef.current) window.clearTimeout(rightClickTimerRef.current);
 		};
 	}, []);
 
 	/**
-	 * 拖动期间在 document 上拦截 touchmove（非 passive + preventDefault），
-	 * 避免 Obsidian / WebView 把水平滑动识别为侧栏收缩或边缘系统手势。
+	 * 拖动期间在 activeDocument 上拦截 touchmove（非 passive + preventDefault），
+	 * 避免 Obsidian / WebView 把水平滑动识别为侧栏收缩或边缘系统手势（弹窗窗口用 activeDocument）。
 	 */
 	React.useEffect(() => {
 		if (!isDragging) return;
 		const blockTouchMove = (e: TouchEvent) => {
 			e.preventDefault();
 		};
-		document.addEventListener("touchmove", blockTouchMove, { passive: false });
+		window.activeDocument.addEventListener("touchmove", blockTouchMove, { passive: false });
 		return () => {
-			document.removeEventListener("touchmove", blockTouchMove);
+			window.activeDocument.removeEventListener("touchmove", blockTouchMove);
 		};
 	}, [isDragging]);
 
@@ -135,8 +136,8 @@ export function ProgressBar({ current, duration, onSeek, onSeekBackward, onSeekF
 	};
 
 	const scheduleLeftSingle = () => {
-		if (leftClickTimerRef.current) clearTimeout(leftClickTimerRef.current);
-		leftClickTimerRef.current = setTimeout(() => {
+		if (leftClickTimerRef.current) window.clearTimeout(leftClickTimerRef.current);
+		leftClickTimerRef.current = window.setTimeout(() => {
 			leftClickTimerRef.current = null;
 			onSeekBackward(5);
 		}, CLICK_VS_DOUBLE_MS);
@@ -151,15 +152,15 @@ export function ProgressBar({ current, duration, onSeek, onSeekBackward, onSeekF
 		e.stopPropagation();
 		e.preventDefault();
 		if (leftClickTimerRef.current) {
-			clearTimeout(leftClickTimerRef.current);
+			window.clearTimeout(leftClickTimerRef.current);
 			leftClickTimerRef.current = null;
 		}
 		onSeekBackward(15);
 	};
 
 	const scheduleRightSingle = () => {
-		if (rightClickTimerRef.current) clearTimeout(rightClickTimerRef.current);
-		rightClickTimerRef.current = setTimeout(() => {
+		if (rightClickTimerRef.current) window.clearTimeout(rightClickTimerRef.current);
+		rightClickTimerRef.current = window.setTimeout(() => {
 			rightClickTimerRef.current = null;
 			onSeekForward(5);
 		}, CLICK_VS_DOUBLE_MS);
@@ -174,7 +175,7 @@ export function ProgressBar({ current, duration, onSeek, onSeekBackward, onSeekF
 		e.stopPropagation();
 		e.preventDefault();
 		if (rightClickTimerRef.current) {
-			clearTimeout(rightClickTimerRef.current);
+			window.clearTimeout(rightClickTimerRef.current);
 			rightClickTimerRef.current = null;
 		}
 		onSeekForward(15);
