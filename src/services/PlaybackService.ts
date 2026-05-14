@@ -59,6 +59,11 @@ export class PlaybackService {
 	private playRequestId = 0;
 
 	/**
+	 * 合并 ended 与 seeked 补发导致的重复 handleTrackEnd（同一物理结束瞬间）
+	 */
+	private lastHandleTrackEndAt = 0;
+
+	/**
 	 * 创建播放服务实例
 	 * 
 	 * @param plugin - 插件实例（读取自动播放曲目等设置）
@@ -417,6 +422,11 @@ export class PlaybackService {
 			this.audioService.pause();
 			this.stateService.setIsPlaying(false);
 		} else {
+			const d = audioElement.duration;
+			const t = audioElement.currentTime;
+			if (Number.isFinite(d) && d > 0 && Number.isFinite(t) && (audioElement.ended || t >= d - 0.06)) {
+				audioElement.currentTime = 0;
+			}
 			await this.audioService.play();
 			this.stateService.setIsPlaying(true);
 		}
@@ -426,6 +436,10 @@ export class PlaybackService {
 	 * 处理歌曲结束
 	 */
 	handleTrackEnd(): void {
+		const now = Date.now();
+		if (now - this.lastHandleTrackEndAt < 450) return;
+		this.lastHandleTrackEndAt = now;
+
 		const state = this.stateService.getState();
 		const { list } = this.listService.getCurrentPlaylistForTrack(
 			state.currentTrack,

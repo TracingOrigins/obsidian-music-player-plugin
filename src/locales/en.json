@@ -55,6 +55,8 @@
 	"playback.noTrack": "No track selected",
 	"playback.noLyrics": "No lyrics",
 	"playback.noSyncedLyrics": "No synced lyrics",
+	"playback.progress.currentHint": "Click to rewind 5s, double-click to rewind 15s",
+	"playback.progress.durationHint": "Click to skip forward 5s, double-click to skip forward 15s",
 	"meta.unknownArtist": "Unknown artist",
 	"meta.unknownAlbum": "Unknown album",
 	"list.all": "All",

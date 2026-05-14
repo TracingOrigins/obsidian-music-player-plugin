@@ -68,6 +68,8 @@ export interface PlayPageProps {
 	onToggleMode: () => void;
 	onOpenPlaylist: () => void;
 	onSeek: (ratio: number) => void;
+	onSeekBackward: (seconds: number) => void;
+	onSeekForward: (seconds: number) => void;
 	
 	// 歌曲信息
 	currentPath: string | null;
@@ -111,6 +113,8 @@ export function PlayPage({
 	onToggleMode,
 	onOpenPlaylist,
 	onSeek,
+	onSeekBackward,
+	onSeekForward,
 	currentPath,
 	sectionId,
 	isFavorite,
@@ -247,7 +251,13 @@ export function PlayPage({
 				onVolumeChange={onVolumeChange}
 				onPlaybackRateChange={onPlaybackRateChange}
 			/>
-			<ProgressBar current={currentTime} duration={duration} onSeek={onSeek} />
+			<ProgressBar
+				current={currentTime}
+				duration={duration}
+				onSeek={onSeek}
+				onSeekBackward={onSeekBackward}
+				onSeekForward={onSeekForward}
+			/>
 			<PlaybackControls
 				isPlaying={isPlaying}
 				playMode={playMode}
