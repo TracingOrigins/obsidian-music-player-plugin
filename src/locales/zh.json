@@ -4,7 +4,7 @@
 	"commands.openPlayer": "打开音乐播放器",
 	"commands.openSettings": "打开音乐播放器设置",
 	"ribbon.musicPlayer": "音乐播放器",
-	"settings.heading": "音乐播放器设置",
+	"settings.heading": "音乐播放器",
 	"settings.musicFolder.name": "音乐文件夹",
 	"settings.musicFolder.desc": "指定包含音乐文件的文件夹路径（相对于仓库根目录，留空则扫描整个仓库）。",
 	"settings.musicFolder.placeholder": "输入或选择文件夹路径",
