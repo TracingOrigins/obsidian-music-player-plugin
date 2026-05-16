@@ -1,14 +1,12 @@
-> 中文 | [English](https://github.com/TracingOrigins/obsidian-music-player-plugin/blob/master/README.md)
-
-<h1 align="center">Music Player</h1>
-
-<p align="center">
-    <img alt="Release version" src="https://img.shields.io/github/v/release/TracingOrigins/obsidian-music-player-plugin?style=for-the-badge">
-    <img alt="Download count" src="https://img.shields.io/github/downloads/TracingOrigins/obsidian-music-player-plugin/total?style=for-the-badge">
-</p>
-<p align="center">
-    <span>一个在 Obsidian 侧边栏播放本地音乐文件的插件，集本地音乐库管理、歌词显示、歌单与收藏、播放模式控制于一体。</span>
-</p>
+<div align="center">
+    <h1>Music Player</h1>
+    <p>
+        <img src="https://img.shields.io/badge/dynamic/json?logo=obsidian&color=%23483699&label=downloads&query=%24%5B%22music-player%22%5D.downloads&url=https%3A%2F%2Fraw.githubusercontent.com%2Fobsidianmd%2Fobsidian-releases%2Fmaster%2Fcommunity-plugin-stats.json" alt="Obsidian Downloads">
+        <img src="https://img.shields.io/github/downloads/TracingOrigins/obsidian-music-player-plugin/total?logo=github" alt="GitHub Downloads">
+    </p>
+    <p>[中文 | <a href="https://github.com/TracingOrigins/obsidian-music-player-plugin/blob/master/README.md">English</a>]</p>
+    <p><a href="https://community.obsidian.md/plugins/music-player" target="_blank">Music Player</a> 是一个在 Obsidian 侧边栏播放本地音乐文件的插件，集本地音乐库管理、歌词显示、歌单与收藏、播放模式控制于一体。</p>
+</div>
 
 ## 功能特性
 
