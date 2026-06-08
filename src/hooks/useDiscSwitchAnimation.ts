@@ -244,6 +244,11 @@ export function useDiscSwitchAnimation({
 		// 这种情况可能发生在：初始化、非切换导致的封面变化等
 		if (!isAnimating && !isAnimatingRef.current) {
 			if (coverChanged || trackChanged) {
+				const wantsSlide = lastAction === "next" || lastAction === "prev";
+				// 侧栏刚重新打开时宽度可能尚未就绪，延迟同步以保留滑动动画机会
+				if (wantsSlide && workspaceLeafWidth === 0) {
+					return;
+				}
 				setDisplayCoverUrl(coverUrl);
 				prevCoverUrlRef.current = coverUrl;
 				prevTrackKeyRef.current = trackKey;

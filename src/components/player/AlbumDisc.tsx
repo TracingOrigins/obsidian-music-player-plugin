@@ -88,36 +88,39 @@ export function AlbumDisc({ coverUrl, trackKey, isPlaying, onPrev, onNext, onTog
 		onResetRotation: resetRotation,
 	});
 
-	// 获取workspace-leaf宽度
+	// 获取 workspace-leaf 宽度（侧栏重新打开时初始宽度可能为 0，需持续监听尺寸变化）
 	React.useEffect(() => {
-		const updateThreshold = () => {
-			// 查找最近的workspace-leaf元素
-			if (panContainerRef.current) {
-				let element: HTMLElement | null = panContainerRef.current;
-				let workspaceLeaf: HTMLElement | null = null;
-				
-				// 向上遍历DOM树查找workspace-leaf
-				while (element && !workspaceLeaf) {
-					element = element.parentElement;
-					if (element && element.classList.contains('workspace-leaf')) {
-						workspaceLeaf = element;
-					}
-				}
-				
-				if (workspaceLeaf) {
-					const leafWidth = workspaceLeaf.offsetWidth || 0;
-					setWorkspaceLeafWidth(leafWidth);
-				} else {
-					// 如果找不到workspace-leaf，使用窗口宽度作为后备
-					const windowWidth = typeof window !== 'undefined' ? window.innerWidth : 1920;
-					setWorkspaceLeafWidth(windowWidth);
-				}
+		const panContainer = panContainerRef.current;
+		if (!panContainer) return;
+
+		let workspaceLeaf: HTMLElement | null = null;
+		let element: HTMLElement | null = panContainer;
+		while (element && !workspaceLeaf) {
+			element = element.parentElement;
+			if (element?.classList.contains("workspace-leaf")) {
+				workspaceLeaf = element;
+			}
+		}
+
+		const updateWidth = () => {
+			if (workspaceLeaf) {
+				setWorkspaceLeafWidth(workspaceLeaf.offsetWidth || 0);
+			} else {
+				const windowWidth = typeof window !== "undefined" ? window.innerWidth : 1920;
+				setWorkspaceLeafWidth(windowWidth);
 			}
 		};
-		
-		updateThreshold();
-		window.addEventListener('resize', updateThreshold);
-		return () => window.removeEventListener('resize', updateThreshold);
+
+		updateWidth();
+
+		if (workspaceLeaf) {
+			const observer = new ResizeObserver(updateWidth);
+			observer.observe(workspaceLeaf);
+			return () => observer.disconnect();
+		}
+
+		window.addEventListener("resize", updateWidth);
+		return () => window.removeEventListener("resize", updateWidth);
 	}, []);
 
 	const discClasses = [
