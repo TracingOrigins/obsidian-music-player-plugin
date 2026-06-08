@@ -130,6 +130,32 @@ async function buildCSS() {
 	// console.log(`✓ CSS 已打包: ${cssDest}（共 ${cssFiles.length} 个文件）`);
 }
 
+/**
+ * music-metadata 依赖中残留的 eval("require") 仅用于 Node stream 解析路径（插件只用 parseBuffer）。
+ * 发布包中替换为静态 require，避免动态代码执行误报。
+ */
+function stripEvalRequireFromBundle() {
+	const mainPath = path.join(process.cwd(), outDir, "main.js");
+	if (!fs.existsSync(mainPath)) return;
+	const code = fs.readFileSync(mainPath, "utf8");
+	const next = code.replace(/eval\("require"\)/g, "require");
+	if (next !== code) {
+		fs.writeFileSync(mainPath, next);
+	}
+}
+
+function stripEvalRequirePlugin() {
+	return {
+		name: "strip-eval-require",
+		setup(build) {
+			build.onEnd((result) => {
+				if (result.errors.length > 0) return;
+				stripEvalRequireFromBundle();
+			});
+		},
+	};
+}
+
 // 复制 manifest.json 到输出目录
 function copyManifest() {
 	const src = path.join(process.cwd(), 'manifest.json');
@@ -204,6 +230,7 @@ const context = await esbuild.context({
 	banner: {
 		js: banner,
 	},
+	plugins: [stripEvalRequirePlugin()],
 	entryPoints: ["src/main.ts"],
 	bundle: true,
 	alias: {

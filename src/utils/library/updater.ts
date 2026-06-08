@@ -16,7 +16,7 @@ import { App, Notice } from "obsidian";
 import MusicPlayerPlugin from "@/main";
 import { getEmbeddedAudioMetadataFromBuffer, readAudioFileBinary } from "../audio/metadata";
 import { generateArtistsAndAlbums } from "../data/transform";
-import { isSupportedAudioExtension } from "@/constants";
+import { scanVaultAudioFiles } from "./scanVaultAudio";
 import { t, tWithParams } from "@/utils/i18n/i18n";
 
 /**
@@ -43,25 +43,10 @@ export async function rebuildAllData(
 	const notice = new Notice(t("notice.scanning"), 0);
 	
 	try {
-		// 1. 获取所有文件并记录总数
-		const allFiles = app.vault.getFiles();
-		
-		// 2. 过滤音乐文件
-		const musicFiles = allFiles.filter(file => {
-			const ext = file.extension?.toLowerCase() || '';
-			return isSupportedAudioExtension(ext);
-		});
+		// 1. 按音乐文件夹设置扫描音频文件（文件夹树遍历，非 vault.getFiles）
+		const filteredFiles = scanVaultAudioFiles(app, plugin.settings.musicFolder ?? "");
 
-		// 3. 如果设置了音乐文件夹，只扫描该文件夹内的文件
-		let filteredFiles = musicFiles;
-		if (plugin.settings.musicFolder) {
-			const folder = plugin.settings.musicFolder.replace(/\/$/, "");
-			filteredFiles = musicFiles.filter((f) => 
-				f.path.startsWith(folder + "/") || f.path === folder
-			);
-		}
-
-		// 4. 如果没有找到音乐文件，清空所有数据并保存
+		// 2. 如果没有找到音乐文件，清空所有数据并保存
 		if (filteredFiles.length === 0) {
 			console.warn("未找到任何音乐文件，请检查音乐文件夹设置");
 			// 清空所有数据，确保 JSON 文件与实际情况一致

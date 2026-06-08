@@ -33,14 +33,7 @@ export class FolderSuggest extends AbstractInputSuggest<TFolder> {
 	 * 从 vault 中获取所有文件夹并存储
 	 */
 	private loadFolders(): void {
-		this.folders = [];
-		// 获取所有已加载的文件和文件夹
-		this.app.vault.getAllLoadedFiles().forEach(file => {
-			if (file instanceof TFolder) {
-				this.folders.push(file);
-			}
-		});
-		// 按路径排序
+		this.folders = this.app.vault.getAllFolders();
 		this.folders.sort((a, b) => a.path.localeCompare(b.path));
 	}
 
