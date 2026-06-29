@@ -60,8 +60,10 @@ export function TrackActions({
 }: TrackActionsProps) {
 	const [isVolumeMenuVisible, setIsVolumeMenuVisible] = React.useState(false);
 	const [isPlaybackRateMenuVisible, setIsPlaybackRateMenuVisible] = React.useState(false);
+	const [isVolumeDragging, setIsVolumeDragging] = React.useState(false);
 	const volumeButtonRef = React.useRef<HTMLButtonElement>(null);
 	const volumeMenuRef = React.useRef<HTMLDivElement>(null);
+	const volumeTrackRef = React.useRef<HTMLDivElement>(null);
 	const playbackRateButtonRef = React.useRef<HTMLButtonElement>(null);
 	const playbackRateMenuRef = React.useRef<HTMLDivElement>(null);
 
@@ -95,10 +97,38 @@ export function TrackActions({
 		}
 	}, [currentPath, sectionId, onToggleFavorite]);
 
-	const handleVolumeSelect = React.useCallback((volumeValue: number) => {
-		onVolumeChange(volumeValue);
-		setIsVolumeMenuVisible(false);
+	// 根据鼠标 Y 坐标计算音量（0-1）
+	const updateVolumeFromY = React.useCallback((clientY: number) => {
+		const track = volumeTrackRef.current;
+		if (!track) return;
+		const rect = track.getBoundingClientRect();
+		const ratio = 1 - (clientY - rect.top) / rect.height;
+		const clamped = Math.max(0, Math.min(1, ratio));
+		onVolumeChange(Math.round(clamped * 100) / 100);
 	}, [onVolumeChange]);
+
+	// 鼠标按下轨道或滑块 — 开始拖拽
+	const handleVolumeMouseDown = React.useCallback((e: React.MouseEvent) => {
+		e.preventDefault();
+		e.stopPropagation();
+		setIsVolumeDragging(true);
+		updateVolumeFromY(e.clientY);
+	}, [updateVolumeFromY]);
+
+	// 拖拽中：跟踪鼠标移动
+	React.useEffect(() => {
+		if (!isVolumeDragging) return;
+		const handleMouseMove = (e: MouseEvent) => {
+			updateVolumeFromY(e.clientY);
+		};
+		const handleMouseUp = () => setIsVolumeDragging(false);
+		window.activeDocument.addEventListener("mousemove", handleMouseMove);
+		window.activeDocument.addEventListener("mouseup", handleMouseUp);
+		return () => {
+			window.activeDocument.removeEventListener("mousemove", handleMouseMove);
+			window.activeDocument.removeEventListener("mouseup", handleMouseUp);
+		};
+	}, [isVolumeDragging, updateVolumeFromY]);
 
 	const handleVolumeButtonClick = React.useCallback((e: React.MouseEvent) => {
 		e.stopPropagation();
@@ -153,8 +183,8 @@ export function TrackActions({
 		return null;
 	}
 
-	const playbackRateOptions = [0.5, 0.75, 1.0, 1.25, 1.5, 1.75, 2.0];
-	const volumeOptions = [0, 0.25, 0.5, 0.75, 1.0];
+	const playbackRateOptions = [2.0, 1.75, 1.5, 1.25, 1.0, 0.75, 0.5];
+	const displayVolumePercent = Math.round(volume * 100);
 
 	return (
 		<div className="track-actions-container" onClick={(e) => e.stopPropagation()}>
@@ -198,16 +228,23 @@ export function TrackActions({
 						onClick={handleVolumeButtonClick}
 					/>
 					{isVolumeMenuVisible && (
-						<div ref={volumeMenuRef} className="volume-menu-popup">
-							{volumeOptions.slice().reverse().map((vol) => (
-								<button
-									key={vol}
-									className={`volume-option ${Math.abs(volume - vol) < 0.01 ? "active" : ""}`}
-									onClick={() => handleVolumeSelect(vol)}
-								>
-									{Math.round(vol * 100)}%
-								</button>
-							))}
+						<div ref={volumeMenuRef} className="volume-menu-popup volume-slider-popup">
+							<span className="volume-slider-value">{displayVolumePercent}%</span>
+							<div
+								ref={volumeTrackRef}
+								className="volume-slider-track"
+								onMouseDown={handleVolumeMouseDown}
+							>
+								<div
+									className="volume-slider-fill"
+									style={{ height: `${displayVolumePercent}%` }}
+								/>
+								<div
+									className="volume-slider-thumb"
+									style={{ bottom: `${displayVolumePercent}%` }}
+									onMouseDown={handleVolumeMouseDown}
+								/>
+							</div>
 						</div>
 					)}
 				</div>
