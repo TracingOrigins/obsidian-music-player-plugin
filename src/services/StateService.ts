@@ -66,9 +66,12 @@ export class StateService {
 	/**
 	 * 创建状态管理服务实例
 	 * 
-	 * 初始化所有状态为默认值
+	 * 初始化所有状态为默认值。
+	 * 
+	 * @param initialVolume - 初始音量（0-1），用于从持久化设置恢复
+	 * @param initialPlaybackRate - 初始播放速率（0.25-4.0），用于从持久化设置恢复
 	 */
-	constructor() {
+	constructor(initialVolume = 1.0, initialPlaybackRate = 1.0) {
 		this.state = {
 			currentTrack: null,
 			currentIndex: -1,
@@ -76,8 +79,8 @@ export class StateService {
 			playMode: "normal",
 			currentLyrics: [],
 			currentExtendedLyrics: [],
-			volume: 1.0,
-			playbackRate: 1.0,
+			volume: Math.max(0, Math.min(1, initialVolume)),
+			playbackRate: Math.max(0.25, Math.min(4.0, initialPlaybackRate)),
 			trackList: [],
 			favorites: [],
 			playlistMap: {},

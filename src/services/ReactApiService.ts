@@ -139,6 +139,9 @@ export class ReactApiService {
 				const audioElement = this.audioService.getAudioElement();
 				if (audioElement) audioElement.volume = clampedVolume;
 				this.stateService.setVolume(clampedVolume);
+				// 持久化到 data.json
+				this.plugin.settings.volume = clampedVolume;
+				await this.plugin.saveData(this.plugin.settings);
 			},
 			getVolume: () => {
 				const state = this.stateService.getState();
@@ -150,6 +153,9 @@ export class ReactApiService {
 				const audioElement = this.audioService.getAudioElement();
 				if (audioElement) audioElement.playbackRate = clampedRate;
 				this.stateService.setPlaybackRate(clampedRate);
+				// 持久化到 data.json
+				this.plugin.settings.playbackRate = clampedRate;
+				await this.plugin.saveData(this.plugin.settings);
 			},
 			getPlaybackRate: () => {
 				const state = this.stateService.getState();

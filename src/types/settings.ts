@@ -31,8 +31,8 @@ export interface TrackInfo {
  * 音乐播放器设置接口
  * 存储插件的所有配置和用户数据
  *
- * 注意：播放状态（当前曲目、播放模式、音量、速度等）不再持久化到设置中，
- * 仅在视图生命周期内以内存形式保存。每次重启后都会从"全部"列表的第一首曲目开始播放。
+ * 注意：播放状态（当前曲目、播放模式等）不持久化到设置中，仅在视图生命周期内以内存形式保存。
+ * 但音量和播放速率会持久化，以便下次启动时恢复上次的偏好设置。
  * 
  * 使用 ID 系统：
  * - trackIndex: ID 到文件路径的映射（主表）
@@ -62,6 +62,10 @@ export interface MusicPlayerSettings {
 	 * 留空表示「全部」列表按当前排序后的第一首。
 	 */
 	autoPlayOpenTrackPath: string;
+	/** 持久化的音量值（0-1），下次启动时恢复 */
+	volume: number;
+	/** 持久化的播放速率（0.25-4.0），下次启动时恢复 */
+	playbackRate: number;
 }
 
 /**
@@ -78,5 +82,7 @@ export const DEFAULT_SETTINGS: MusicPlayerSettings = {
 	albums: {},                 // 默认没有专辑数据
 	autoPlayOnOpen: false,      // 默认不自动播放
 	autoPlayOpenTrackPath: '', // 默认：全部列表第一首
+	volume: 1.0,               // 默认音量 100%
+	playbackRate: 1.0,         // 默认正常速度
 };
 

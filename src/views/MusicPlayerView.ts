@@ -140,7 +140,10 @@ export class MusicPlayerView extends ItemView {
 	constructor(leaf: WorkspaceLeaf, plugin: MusicPlayerPlugin) {
 		super(leaf);
 		this.plugin = plugin;
-		this.stateService = new StateService();
+		this.stateService = new StateService(
+			this.plugin.settings.volume ?? 1.0,
+			this.plugin.settings.playbackRate ?? 1.0
+		);
 		this.playlistService = new PlaylistService(this.app, this.plugin);
 		this.favoriteService = new FavoriteService(this.plugin);
 		this.lyricsService = new LyricsService(this.plugin);
