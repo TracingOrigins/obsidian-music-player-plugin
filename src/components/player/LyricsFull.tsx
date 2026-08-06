@@ -60,15 +60,22 @@ export function LyricsFull({
 		);
 	}
 
+	// 在首/尾各放置一段等于容器可视高度一半的空白，使第一行与最后一行
+	// 都能滚动到容器正中央（否则首行贴顶、尾行贴底，无法居中）
+	const [halfHeight, setHalfHeight] = React.useState(0);
+	React.useLayoutEffect(() => {
+		const container = scrollRef.current;
+		if (!container) return;
+		const update = () => setHalfHeight(container.clientHeight / 2);
+		update();
+		const ro = new ResizeObserver(update);
+		ro.observe(container);
+		return () => ro.disconnect();
+	}, [scrollRef, fullLyrics]);
+
 	return (
-		<div
-			className="lyrics lyrics-scroll"
-			ref={scrollRef}
-			style={{
-				paddingTop: 0,
-				paddingBottom: 0,
-			}}
-		>
+		<div className="lyrics lyrics-scroll" ref={scrollRef}>
+			<div className="lyrics-spacer" style={{ height: halfHeight }} aria-hidden="true" />
 			{fullLyrics.map((line, index) => {
 				// 清理所有时间标签（包括卡拉OK标签），只显示纯歌词文本
 				const displayText = LyricsParser.cleanText(line.text);
@@ -97,6 +104,7 @@ export function LyricsFull({
 					</div>
 				);
 			})}
+			<div className="lyrics-spacer" style={{ height: halfHeight }} aria-hidden="true" />
 		</div>
 	);
 }

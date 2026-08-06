@@ -17,7 +17,6 @@ import { isSupportedAudioExtension } from "@/constants";
 import { StateService } from "./StateService";
 import { PlaylistService } from "./PlaylistService";
 import { LyricsService } from "./LyricsService";
-import type { CurrentList } from "./ListService";
 import { generateArtistsAndAlbums } from "@/utils/data/transform";
 import { getOrCreateTrackId, getTrackPath } from "@/utils/track/id";
 export interface LibraryOrchestrationCallbacks {
@@ -92,7 +91,7 @@ export class LibraryService {
 			tracks.length === currentList.tracks.length &&
 			tracks.every((f, i) => f.path === currentList.tracks[i]?.path);
 		if (!same) {
-			this.stateService.setCurrentList({ type, name, tracks } as CurrentList);
+			this.stateService.setCurrentList({ type, name, tracks });
 		}
 
 		// 同步 currentTrack/currentIndex：

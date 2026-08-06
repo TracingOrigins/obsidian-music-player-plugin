@@ -5,8 +5,8 @@
  * - 基于 playingIndex 的自动滚动，让当前行保持在容器中间
  * - 初次进入歌词模式时的「立即滚动到当前行」
  * - 手动滚动与自动滚动之间的状态区分
- * - 用户手动滚动后暂停自动滚动，5秒后自动恢复
- * - 如果在5秒内有新的手动滚动，则重新计时
+ * - 用户手动滚动时暂停自动滚动，交互结束（指针/触摸抬起或滚动/滚轮停止）后
+ *   立即跳回当前播放行并居中，无需等待
  */
 
 import React from "react";
@@ -60,23 +60,39 @@ export function useLyricsAutoScroll({
 	// 用时间窗更可靠地屏蔽“程序触发”的 scroll 事件（smooth scroll 可能持续 > 400ms）
 	const autoScrollSuppressUntilRef = React.useRef<number>(0);
 	const isInitialScrollRef = React.useRef(false);
+	// 始终保存最新的播放行索引，供用户手动滚动结束后立即跳回使用
+	const latestPlayingIndexRef = React.useRef(playingIndex);
 	// 标记是否暂停自动滚动（用户手动滚动后）
 	const isAutoScrollPausedRef = React.useRef(false);
-	// 记录最后一次用户交互时间，用于避免旧 timer 提前恢复
+	// 记录最后一次用户交互时间（用于交互窗口判断）
 	const lastUserInteractionAtRef = React.useRef<number>(0);
-	// 存储恢复自动滚动的定时器ID
-	const resumeAutoScrollTimerRef = React.useRef<number | null>(null);
 	// 标记用户是否正在进行滚动相关交互（拖动/触摸滑动/滚轮）
 	const isUserInteractingRef = React.useRef(false);
 	const wheelIdleTimerRef = React.useRef<number | null>(null);
 	const scrollIdleTimerRef = React.useRef<number | null>(null);
 
 	// 确保 lineRefs 数组长度与歌词匹配（仅歌词模式）
+	// 当歌词数据变化（切换歌曲）时，重置滚动相关状态，避免残留的暂停标记或
+	// 旧歌曲的最后滚动索引阻止新歌曲的自动滚动（否则切歌后拖动/点击进度条不会滚动到当前行）
 	React.useEffect(() => {
 		if (viewMode === "lyrics" && lyricsToUse && lyricsToUse.length > 0) {
 			lineRefs.current = new Array(lyricsToUse.length).fill(null) as (HTMLDivElement | null)[];
 		} else {
 			lineRefs.current = [];
+		}
+		// 切换歌曲后，清除自动滚动的暂停/交互状态，让拖动进度条能重新触发滚动
+		isAutoScrollPausedRef.current = false;
+		isUserInteractingRef.current = false;
+		isAutoScrollingRef.current = false;
+		lastScrollIndexRef.current = -1;
+		lastUserInteractionAtRef.current = 0;
+		if (scrollIdleTimerRef.current !== null) {
+			window.clearTimeout(scrollIdleTimerRef.current);
+			scrollIdleTimerRef.current = null;
+		}
+		if (wheelIdleTimerRef.current !== null) {
+			window.clearTimeout(wheelIdleTimerRef.current);
+			wheelIdleTimerRef.current = null;
 		}
 	}, [viewMode, lyricsToUse]);
 
@@ -145,10 +161,6 @@ export function useLyricsAutoScroll({
 			isInitialScrollRef.current = false;
 			isAutoScrollPausedRef.current = false;
 			isUserInteractingRef.current = false;
-			if (resumeAutoScrollTimerRef.current !== null) {
-				window.clearTimeout(resumeAutoScrollTimerRef.current);
-				resumeAutoScrollTimerRef.current = null;
-			}
 			if (wheelIdleTimerRef.current !== null) {
 				window.clearTimeout(wheelIdleTimerRef.current);
 				wheelIdleTimerRef.current = null;
@@ -222,15 +234,11 @@ export function useLyricsAutoScroll({
 
 	// 监听滚动事件，检测用户手动滚动
 	// 依赖 lyricsToUse：换曲时歌词容器会因 key 变化被重新挂载，必须在新容器上重新绑定监听器，
-	// 否则用户滑动无法触发 5 秒暂停，且会被自动滚动打断（仅唱片切换时未换容器故无此问题）
+	// 否则用户滑动无法暂停自动滚动，且会被自动滚动打断（仅唱片切换时未换容器故无此问题）
 	React.useEffect(() => {
 		if (viewMode !== "lyrics") {
 			// 切换到非歌词模式时，重置暂停状态并清理定时器
 			isAutoScrollPausedRef.current = false;
-			if (resumeAutoScrollTimerRef.current !== null) {
-				window.clearTimeout(resumeAutoScrollTimerRef.current);
-				resumeAutoScrollTimerRef.current = null;
-			}
 			if (wheelIdleTimerRef.current !== null) {
 				window.clearTimeout(wheelIdleTimerRef.current);
 				wheelIdleTimerRef.current = null;
@@ -248,36 +256,27 @@ export function useLyricsAutoScroll({
 		const supportsPointerEvents =
 			typeof window !== "undefined" && "PointerEvent" in window;
 
-		const scheduleResumeIfIdle = () => {
-			if (resumeAutoScrollTimerRef.current !== null) {
-				window.clearTimeout(resumeAutoScrollTimerRef.current);
-				resumeAutoScrollTimerRef.current = null;
+		const resumeAutoScrollImmediately = () => {
+			// 用户手动滚动结束：立即解除暂停并跳回当前播放行（居中），不等待
+			isAutoScrollPausedRef.current = false;
+			isUserInteractingRef.current = false;
+			const idx = latestPlayingIndexRef.current;
+			if (idx >= 0) {
+				isAutoScrollingRef.current = true;
+				autoScrollSuppressUntilRef.current = Date.now() + 1500;
+				scrollLineToCenterAbove(idx);
+				window.setTimeout(() => {
+					if (Date.now() >= autoScrollSuppressUntilRef.current) {
+						isAutoScrollingRef.current = false;
+					}
+				}, 1600);
 			}
-
-			const tick = () => {
-				const now = Date.now();
-				const elapsed = now - lastUserInteractionAtRef.current;
-
-				// 用户仍在交互中，或距离最后一次交互不足 5 秒：继续等待
-				if (isUserInteractingRef.current || elapsed < 5000) {
-					const waitMs = Math.max(50, 5000 - elapsed);
-					resumeAutoScrollTimerRef.current = window.setTimeout(tick, waitMs);
-					return;
-				}
-
-				isAutoScrollPausedRef.current = false;
-				resumeAutoScrollTimerRef.current = null;
-			};
-
-			resumeAutoScrollTimerRef.current = window.setTimeout(tick, 5000);
 		};
 
 		const pauseAutoScrollForUserInteraction = () => {
-			// 用户手动滚动/交互：暂停自动滚动，并在“最后一次交互后”5 秒恢复
+			// 用户手动滚动/交互：暂停自动滚动，待交互停止后立即跳回当前行
 			isAutoScrollPausedRef.current = true;
 			lastUserInteractionAtRef.current = Date.now();
-
-			scheduleResumeIfIdle();
 		};
 
 		const handleScroll = () => {
@@ -296,8 +295,8 @@ export function useLyricsAutoScroll({
 				window.clearTimeout(scrollIdleTimerRef.current);
 			}
 			scrollIdleTimerRef.current = window.setTimeout(() => {
-				isUserInteractingRef.current = false;
 				scrollIdleTimerRef.current = null;
+				resumeAutoScrollImmediately();
 			}, 500);
 
 			pauseAutoScrollForUserInteraction();
@@ -309,7 +308,8 @@ export function useLyricsAutoScroll({
 		};
 
 		const handlePointerUp = () => {
-			isUserInteractingRef.current = false;
+			// 指针抬起即视为一次手动滚动结束，立即跳回当前播放行
+			resumeAutoScrollImmediately();
 		};
 
 		const handleTouchStart = () => {
@@ -318,7 +318,7 @@ export function useLyricsAutoScroll({
 		};
 
 		const handleTouchEnd = () => {
-			isUserInteractingRef.current = false;
+			resumeAutoScrollImmediately();
 		};
 
 		const handleWheel = () => {
@@ -329,8 +329,8 @@ export function useLyricsAutoScroll({
 				window.clearTimeout(wheelIdleTimerRef.current);
 			}
 			wheelIdleTimerRef.current = window.setTimeout(() => {
-				isUserInteractingRef.current = false;
 				wheelIdleTimerRef.current = null;
+				resumeAutoScrollImmediately();
 			}, 500);
 		};
 
@@ -359,9 +359,6 @@ export function useLyricsAutoScroll({
 			}
 			container.removeEventListener('wheel', handleWheel);
 			// 清理定时器
-			if (resumeAutoScrollTimerRef.current !== null) {
-				window.clearTimeout(resumeAutoScrollTimerRef.current);
-			}
 			if (wheelIdleTimerRef.current !== null) {
 				window.clearTimeout(wheelIdleTimerRef.current);
 			}
@@ -373,14 +370,14 @@ export function useLyricsAutoScroll({
 
 	// 当播放进度变化时，自动把当前行滚动到容器正中间（仅歌词模式）
 	React.useEffect(() => {
+		// 同步最新播放行索引，供用户手动滚动结束后立即跳回
+		latestPlayingIndexRef.current = playingIndex;
 		if (viewMode !== "lyrics" || isInitialScrollRef.current) return;
 		if (playingIndex < 0) return;
 		// 如果自动滚动被暂停（用户手动滚动后），则不执行自动滚动
 		if (isAutoScrollPausedRef.current) return;
 		// 用户仍在交互/滚动中时，不要触发自动滚动（避免“正在滑动被拉回”）
 		if (isUserInteractingRef.current) return;
-		// 再兜底一次：最近 5 秒内发生过用户交互也不要自动滚动（避免竞态/误清 paused）
-		if (Date.now() - lastUserInteractionAtRef.current < 5000) return;
 
 		isAutoScrollingRef.current = true;
 		autoScrollSuppressUntilRef.current = Date.now() + 1500;
@@ -393,11 +390,14 @@ export function useLyricsAutoScroll({
 		}, 1600);
 	}, [viewMode, playingIndex, scrollLineToCenterAbove]);
 
-	// 组件卸载时清理定时器
+	// 组件卸载时清理残留定时器
 	React.useEffect(() => {
 		return () => {
-			if (resumeAutoScrollTimerRef.current !== null) {
-				window.clearTimeout(resumeAutoScrollTimerRef.current);
+			if (wheelIdleTimerRef.current !== null) {
+				window.clearTimeout(wheelIdleTimerRef.current);
+			}
+			if (scrollIdleTimerRef.current !== null) {
+				window.clearTimeout(scrollIdleTimerRef.current);
 			}
 		};
 	}, []);

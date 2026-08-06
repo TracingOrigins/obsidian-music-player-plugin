@@ -104,8 +104,10 @@
 	display: flex;
 	flex-direction: column;
 	align-items: center;
+	justify-content: center;
 	gap: 8px;
-	min-width: 48px;
+	width: 50px;
+	height: 150px;
 	z-index: 100;
 }
 
@@ -118,22 +120,47 @@
 
 .music-player .volume-slider-track {
 	position: relative;
+	/* 视觉条 6px 宽，但用水平 padding 做透明「空气层」扩大可点/可拖区域（参考进度条） */
 	width: 6px;
 	height: 100px;
+	padding: 0 9px;
+	box-sizing: content-box;
+	/* 本体透明，仅作空气层与可点容器；底色圆角胶囊由 ::before 绘制 */
+	background: transparent;
+	cursor: grab;
+	touch-action: none;
+	-webkit-tap-highlight-color: transparent;
+	user-select: none;
+	overflow: visible;
+}
+
+/* 中间 6px 的灰色圆角胶囊（未上色部分），对齐到 content 区域，确保上下都是圆角 */
+.music-player .volume-slider-track::before {
+	content: "";
+	position: absolute;
+	left: 9px;
+	right: 9px;
+	top: 0;
+	bottom: 0;
 	background: var(--background-modifier-border);
 	border-radius: 3px;
-	cursor: pointer;
-	overflow: visible;
+	pointer-events: none;
+}
+
+.music-player .volume-slider-track:active {
+	cursor: grabbing;
 }
 
 .music-player .volume-slider-fill {
 	position: absolute;
 	bottom: 0;
-	left: 0;
-	right: 0;
+	/* 对齐到 content 区域（padding 9px），只覆盖视觉条宽度 */
+	left: 9px;
+	right: 9px;
 	background: var(--interactive-accent);
 	border-radius: 3px;
 	pointer-events: none;
+	z-index: 0;
 }
 
 .music-player .volume-slider-thumb {
@@ -144,10 +171,14 @@
 	height: 16px;
 	border-radius: 50%;
 	background: var(--interactive-accent);
-	cursor: pointer;
+	cursor: grab;
 	box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
 	transition: box-shadow 0.15s ease;
 	z-index: 1;
+}
+
+.music-player .volume-slider-thumb:active {
+	cursor: grabbing;
 }
 
 .music-player .volume-slider-thumb:hover {
@@ -195,12 +226,13 @@
 	display: flex;
 	flex-direction: column;
 	gap: 4px;
-	min-width: 80px;
+	width: 56px;
+	height: 160px;
 	z-index: 100;
 }
 
 .music-player .playback-rate-option {
-	padding: 6px 12px;
+	padding: 2px 4px;
 	border: none;
 	background: transparent;
 	border-radius: 4px;

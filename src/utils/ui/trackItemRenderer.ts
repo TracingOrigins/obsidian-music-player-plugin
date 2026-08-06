@@ -11,28 +11,38 @@ import { t } from "@/utils/i18n/i18n";
 /**
  * 创建 SVG 播放占位符图标
  * 
- * @param doc 与列表项同一窗口的 Document（弹窗场景用 contentEl.doc，勿直接用全局 document）
+ * @param el 与列表项同一窗口的 HTMLElement（弹窗场景用 contentEl，勿直接用全局 document）
  */
-export function createPlayPlaceholderSVG(doc: Document): SVGSVGElement {
-	const svg = doc.createElementNS("http://www.w3.org/2000/svg", "svg");
-	svg.setAttribute("xmlns", "http://www.w3.org/2000/svg");
-	svg.setAttribute("width", "24");
-	svg.setAttribute("height", "24");
-	svg.setAttribute("viewBox", "0 0 24 24");
-	svg.setAttribute("fill", "none");
-	svg.setAttribute("stroke", "currentColor");
-	svg.setAttribute("stroke-width", "2");
-	
-	const circle = doc.createElementNS("http://www.w3.org/2000/svg", "circle");
-	circle.setAttribute("cx", "12");
-	circle.setAttribute("cy", "12");
-	circle.setAttribute("r", "10");
+export function createPlayPlaceholderSVG(el: HTMLElement): SVGSVGElement {
+	const svg = el.createSvg("svg", {
+		attr: {
+			width: "24",
+			height: "24",
+			viewBox: "0 0 24 24",
+			fill: "none",
+			stroke: "currentColor",
+			"stroke-width": "2",
+		},
+	});
+
+	const circle = el.createSvg("circle", {
+		attr: {
+			cx: "12",
+			cy: "12",
+			r: "10",
+		},
+	});
 	svg.appendChild(circle);
-	
-	const polygon = doc.createElementNS("http://www.w3.org/2000/svg", "polygon");
-	polygon.setAttribute("points", "10 8 16 12 10 16 10 8");
+
+	const polygon = el.createSvg("polygon", {
+		attr: {
+			points: "10 8 16 12 10 16 10 8",
+		},
+	});
 	svg.appendChild(polygon);
-	
+
+	// 仅创建元素，移除自动挂载到 el 的引用，由调用方自行挂载
+	svg.remove();
 	return svg;
 }
 
@@ -87,7 +97,7 @@ export function renderTrackItemContent(
 	coverContainerEl.setAttribute("data-track-path", file.path);
 	// 先显示占位图标（播放图标），然后异步加载封面
 	const placeholder = coverContainerEl.createDiv("playlist-item-placeholder");
-	placeholder.appendChild(createPlayPlaceholderSVG(contentEl.doc));
+	placeholder.appendChild(createPlayPlaceholderSVG(contentEl));
 	
 	// 如果已经有缓存的封面，直接加载
 	if (coverCache.has(file.path)) {

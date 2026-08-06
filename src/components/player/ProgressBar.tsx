@@ -1,7 +1,8 @@
 /**
  * 播放进度条组件
  *
- * 进度条支持指针拖动与单击跳转（立即 seek）；左侧时间单击/双击快退，右侧单击/双击快进。
+ * 进度条支持指针拖动（拖动时仅视觉跟随，松手后才 seek）与单击跳转（立即 seek）；
+ * 左侧时间单击/双击快退，右侧单击/双击快进。
  */
 
 import React from "react";
@@ -19,7 +20,7 @@ export interface ProgressBarProps {
 	current: number;
 	/** 总时长（秒） */
 	duration: number;
-	/** 跳转到指定比例（0–1），单击与拖动过程中会多次调用 */
+	/** 跳转到指定比例（0–1），单击立即 seek；拖动过程仅在松手时调用一次 */
 	onSeek: (ratio: number) => void;
 	/** 快退若干秒（正数，由实现从当前时间减去） */
 	onSeekBackward: (seconds: number) => void;
@@ -42,14 +43,17 @@ export function formatTime(sec: number): string {
 }
 
 /**
- * 播放进度条：指针按下即 seek，拖动过程中连续 seek；释放指针结束拖动。
+ * 播放进度条：指针按下仅视觉跟随，拖动过程中连续更新本地比例（不 seek），
+ * 松手后才一次性 seek；释放指针结束拖动。
  */
 export function ProgressBar({ current, duration, onSeek, onSeekBackward, onSeekForward }: ProgressBarProps) {
-	const percent = duration > 0 ? Math.min(Math.max((current / duration) * 100, 0), 100) : 0;
-
 	const barRef = React.useRef<HTMLDivElement | null>(null);
 	const dragActiveRef = React.useRef(false);
 	const [isDragging, setIsDragging] = React.useState(false);
+	/** 拖动期间的本地比例（0–1），松手前仅用于视觉呈现，不触发 seek */
+	const [dragRatio, setDragRatio] = React.useState<number | null>(null);
+	/** 松手后临时锁定显示比例，直到真实 current 追上目标，避免点击后回闪 */
+	const pendingRatioRef = React.useRef(false);
 
 	/** DOM 定时器 id（用 number 避免与 NodeJS.Timeout 在 tsc 下的冲突） */
 	const leftClickTimerRef = React.useRef<number | null>(null);
@@ -77,23 +81,41 @@ export function ProgressBar({ current, duration, onSeek, onSeekBackward, onSeekF
 		};
 	}, [isDragging]);
 
-	const seekFromClientX = React.useCallback(
-		(clientX: number) => {
-			const el = barRef.current;
-			if (!el) return;
-			const rect = el.getBoundingClientRect();
-			const w = rect.width;
-			if (w <= 0) return;
-			const ratio = (clientX - rect.left) / w;
-			onSeek(Math.min(Math.max(ratio, 0), 1));
-		},
-		[onSeek]
-	);
+	const ratioFromClientX = React.useCallback((clientX: number): number | null => {
+		const el = barRef.current;
+		if (!el) return null;
+		const rect = el.getBoundingClientRect();
+		const w = rect.width;
+		if (w <= 0) return null;
+		return Math.min(Math.max((clientX - rect.left) / w, 0), 1);
+	}, []);
+
+	/**
+	 * 松手 seek 后，真实 currentTime 需要一段时间才更新。在此期间保留 dragRatio 作为显示，
+	 * 直到 current 真正追平目标比例（或超时兜底），才释放回真实进度，避免点击后回闪。
+	 */
+	React.useEffect(() => {
+		if (!pendingRatioRef.current || dragRatio === null) return;
+		const target = dragRatio;
+		const settle = () => {
+			pendingRatioRef.current = false;
+			setDragRatio(null);
+		};
+		// 当前进度已接近目标即视为追上
+		if (duration > 0 && Math.abs(current / duration - target) < 0.01) {
+			settle();
+			return;
+		}
+		// 超时兜底：即使 seek 回调迟迟未更新 current，也不让进度条卡在目标位置
+		const timer = window.setTimeout(settle, 700);
+		return () => window.clearTimeout(timer);
+	}, [current, duration, dragRatio]);
 
 	const endBarDrag = React.useCallback((e: React.PointerEvent<HTMLDivElement>) => {
 		if (!dragActiveRef.current) return;
 		e.stopPropagation();
 		const target = e.currentTarget;
+		const ratio = ratioFromClientX(e.clientX);
 		try {
 			if (target.hasPointerCapture(e.pointerId)) {
 				target.releasePointerCapture(e.pointerId);
@@ -103,11 +125,22 @@ export function ProgressBar({ current, duration, onSeek, onSeekBackward, onSeekF
 		}
 		dragActiveRef.current = false;
 		setIsDragging(false);
-	}, []);
+		// 松开指针后保留 dragRatio 用于视觉呈现，直到真实 current 追上目标，避免回闪
+		if (ratio !== null) {
+			pendingRatioRef.current = true;
+			onSeek(ratio);
+		} else {
+			setDragRatio(null);
+		}
+	}, [onSeek, ratioFromClientX]);
 
 	const onBarLostPointerCapture = React.useCallback(() => {
 		dragActiveRef.current = false;
 		setIsDragging(false);
+		// 若已触发 seek 且正在等待 current 追上，则保留 dragRatio 不清除，避免回闪
+		if (!pendingRatioRef.current) {
+			setDragRatio(null);
+		}
 	}, []);
 
 	const onBarPointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
@@ -125,14 +158,18 @@ export function ProgressBar({ current, duration, onSeek, onSeekBackward, onSeekF
 			setIsDragging(false);
 			return;
 		}
-		seekFromClientX(e.clientX);
+		// 仅记录拖拽起点用于视觉跟随，松手后才 seek
+		const ratio = ratioFromClientX(e.clientX);
+		if (ratio !== null) setDragRatio(ratio);
 	};
 
 	const onBarPointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
 		if (!dragActiveRef.current) return;
 		e.stopPropagation();
 		e.preventDefault();
-		seekFromClientX(e.clientX);
+		// 拖动期间仅更新本地比例，避免实时 seek 造成的"搓碟"与性能浪费
+		const ratio = ratioFromClientX(e.clientX);
+		if (ratio !== null) setDragRatio(ratio);
 	};
 
 	const scheduleLeftSingle = () => {
@@ -181,6 +218,11 @@ export function ProgressBar({ current, duration, onSeek, onSeekBackward, onSeekF
 		onSeekForward(15);
 	};
 
+	// 拖动期间使用本地比例驱动视觉，松手后回落到真实播放进度
+	const displayRatio = dragRatio !== null ? dragRatio : duration > 0 ? current / duration : 0;
+	const displayPercent = Math.min(Math.max(displayRatio * 100, 0), 100);
+	const displayCurrent = dragRatio !== null ? dragRatio * duration : current;
+
 	return (
 		<div className="play-progress-container">
 			<span
@@ -189,7 +231,7 @@ export function ProgressBar({ current, duration, onSeek, onSeekBackward, onSeekF
 				onClick={onLeftTimeClick}
 				onDoubleClick={onLeftTimeDoubleClick}
 			>
-				{formatTime(current)}
+				{formatTime(displayCurrent)}
 			</span>
 			<div
 				ref={barRef}
@@ -200,7 +242,7 @@ export function ProgressBar({ current, duration, onSeek, onSeekBackward, onSeekF
 				onPointerCancel={endBarDrag}
 				onLostPointerCapture={onBarLostPointerCapture}
 			>
-				<div className="play-progress-fill" style={{ width: `${percent}%` }} />
+				<div className="play-progress-fill" style={{ width: `${displayPercent}%` }} />
 			</div>
 			<span
 				className="play-time duration"

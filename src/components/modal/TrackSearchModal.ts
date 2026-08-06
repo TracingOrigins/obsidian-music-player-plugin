@@ -409,7 +409,7 @@ export class TrackSearchModal extends FuzzySuggestModal<TFile> {
 			if (this.observer && this.modalEl) {
 				const coverContainers = this.modalEl.querySelectorAll('[data-track-path]');
 				coverContainers.forEach((container) => {
-					this.observer?.observe(container as HTMLElement);
+					this.observer?.observe(container);
 				});
 			}
 		}, 0);

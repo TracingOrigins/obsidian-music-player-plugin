@@ -97,7 +97,7 @@ export function TrackActions({
 		}
 	}, [currentPath, sectionId, onToggleFavorite]);
 
-	// 根据鼠标 Y 坐标计算音量（0-1）
+	// 根据指针 Y 坐标计算音量（0-1），垂直滑块：顶部为 100%
 	const updateVolumeFromY = React.useCallback((clientY: number) => {
 		const track = volumeTrackRef.current;
 		if (!track) return;
@@ -107,28 +107,53 @@ export function TrackActions({
 		onVolumeChange(Math.round(clamped * 100) / 100);
 	}, [onVolumeChange]);
 
-	// 鼠标按下轨道或滑块 — 开始拖拽
-	const handleVolumeMouseDown = React.useCallback((e: React.MouseEvent) => {
+	// 拖拽期间拦截 touchmove（非 passive + preventDefault），避免 WebView 把垂直滑动识别为页面滚动/边缘手势
+	React.useEffect(() => {
+		if (!isVolumeDragging) return;
+		const blockTouchMove = (e: TouchEvent) => {
+			e.preventDefault();
+		};
+		window.activeDocument.addEventListener("touchmove", blockTouchMove, { passive: false });
+		return () => {
+			window.activeDocument.removeEventListener("touchmove", blockTouchMove);
+		};
+	}, [isVolumeDragging]);
+
+	// 指针按下轨道或滑块 — 开始拖拽（兼容鼠标与触摸，参考进度条实现）
+	const handleVolumePointerDown = React.useCallback((e: React.PointerEvent) => {
+		if (e.pointerType === "mouse" && e.button !== 0) return;
 		e.preventDefault();
 		e.stopPropagation();
 		setIsVolumeDragging(true);
+		try {
+			(e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+		} catch {
+			// 捕获失败也继续，至少支持单击定位
+		}
 		updateVolumeFromY(e.clientY);
 	}, [updateVolumeFromY]);
 
-	// 拖拽中：跟踪鼠标移动
-	React.useEffect(() => {
+	// 拖拽中：指针移动（通过指针捕获，移动端也能持续收到事件）
+	const handleVolumePointerMove = React.useCallback((e: React.PointerEvent) => {
 		if (!isVolumeDragging) return;
-		const handleMouseMove = (e: MouseEvent) => {
-			updateVolumeFromY(e.clientY);
-		};
-		const handleMouseUp = () => setIsVolumeDragging(false);
-		window.activeDocument.addEventListener("mousemove", handleMouseMove);
-		window.activeDocument.addEventListener("mouseup", handleMouseUp);
-		return () => {
-			window.activeDocument.removeEventListener("mousemove", handleMouseMove);
-			window.activeDocument.removeEventListener("mouseup", handleMouseUp);
-		};
+		e.preventDefault();
+		e.stopPropagation();
+		updateVolumeFromY(e.clientY);
 	}, [isVolumeDragging, updateVolumeFromY]);
+
+	// 拖拽结束：释放指针捕获
+	const handleVolumePointerUp = React.useCallback((e: React.PointerEvent) => {
+		if (!isVolumeDragging) return;
+		e.stopPropagation();
+		try {
+			if ((e.currentTarget as HTMLElement).hasPointerCapture(e.pointerId)) {
+				(e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId);
+			}
+		} catch {
+			// 已释放时忽略
+		}
+		setIsVolumeDragging(false);
+	}, [isVolumeDragging]);
 
 	const handleVolumeButtonClick = React.useCallback((e: React.MouseEvent) => {
 		e.stopPropagation();
@@ -183,7 +208,7 @@ export function TrackActions({
 		return null;
 	}
 
-	const playbackRateOptions = [2.0, 1.75, 1.5, 1.25, 1.0, 0.75, 0.5];
+	const playbackRateOptions = [2.0, 1.5, 1.0, 0.75, 0.5];
 	const displayVolumePercent = Math.round(volume * 100);
 
 	return (
@@ -211,7 +236,7 @@ export function TrackActions({
 									className={`playback-rate-option ${Math.abs(playbackRate - rate) < 0.01 ? "active" : ""}`}
 									onClick={() => handlePlaybackRateSelect(rate)}
 								>
-									{rate.toFixed(2)}x
+									{rate.toFixed(1)}x
 								</button>
 							))}
 						</div>
@@ -233,7 +258,10 @@ export function TrackActions({
 							<div
 								ref={volumeTrackRef}
 								className="volume-slider-track"
-								onMouseDown={handleVolumeMouseDown}
+								onPointerDown={handleVolumePointerDown}
+								onPointerMove={handleVolumePointerMove}
+								onPointerUp={handleVolumePointerUp}
+								onPointerCancel={handleVolumePointerUp}
 							>
 								<div
 									className="volume-slider-fill"
@@ -242,7 +270,7 @@ export function TrackActions({
 								<div
 									className="volume-slider-thumb"
 									style={{ bottom: `${displayVolumePercent}%` }}
-									onMouseDown={handleVolumeMouseDown}
+									onPointerDown={handleVolumePointerDown}
 								/>
 							</div>
 						</div>

@@ -47,6 +47,13 @@
 	text-align: center;
 }
 
+/* 顶部/底部占位空白：高度等于容器可视高度一半，确保首行与尾行都能居中显示 */
+.music-player .lyrics-spacer {
+	flex: 0 0 auto;
+	width: 100%;
+	pointer-events: none;
+}
+
 /* 歌词文本 */
 .music-player .lyrics-text {
 	cursor: pointer;
