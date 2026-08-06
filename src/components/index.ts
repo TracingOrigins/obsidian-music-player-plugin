@@ -35,8 +35,3 @@ export { LyricsExtendedTriplet } from "./player/LyricsExtendedTriplet";
 export { IconButton } from "./shared/IconButton";
 export { NavigationBar } from "./shared/NavigationBar";
 
-// Suggest 组件
-export { FolderSuggest } from "./shared/FolderSuggest";
-export { TrackSuggest, getTrackSongDisplayName } from "./shared/TrackSuggest";
-export type { TrackSuggestSettingsHost } from "./shared/TrackSuggest";
-

@@ -37,7 +37,7 @@ export type PlayMode = 'normal' | 'repeat-all' | 'repeat-one' | 'shuffle';
  */
 export default class MusicPlayerPlugin extends Plugin {
 	/** 插件设置对象，存储所有配置和用户数据 */
-	settings: MusicPlayerSettings;
+	declare settings: MusicPlayerSettings;
 
 	/**
 	 * 插件加载时的初始化方法

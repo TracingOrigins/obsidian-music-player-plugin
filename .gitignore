@@ -25,3 +25,9 @@ data.json
 # other
 *.zip
 .env
+
+# references
+references
+
+# CodeBuddy AI tooling config (skills, memory, automations)
+.codebuddy
