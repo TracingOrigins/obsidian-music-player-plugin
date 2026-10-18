@@ -47,7 +47,8 @@
 	text-align: center;
 }
 
-/* 顶部/底部占位空白：高度等于容器可视高度一半，确保首行与尾行都能居中显示 */
+/* 顶部/底部占位空白：高度等于容器可视高度一半，确保首行与尾行都能居中显示。
+   普通歌词视图（LyricsFull）与逐字歌词视图（LyricsExtendedFull）共用 */
 .music-player .lyrics-spacer {
 	flex: 0 0 auto;
 	width: 100%;

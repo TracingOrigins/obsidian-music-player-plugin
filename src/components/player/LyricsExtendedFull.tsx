@@ -128,6 +128,20 @@ export function LyricsExtendedFull({
 	scrollRef,
 	lineRefs,
 }: LyricsExtendedFullProps) {
+	// 在首/尾各放置一段等于容器可视高度一半的空白，使第一行与最后一行
+	// 都能滚动到容器正中央（与普通歌词视图 LyricsFull 一致；
+	// 若无占位，Math.max(0, ...) 会把首行钳在容器顶部无法居中）
+	const [halfHeight, setHalfHeight] = React.useState(0);
+	React.useLayoutEffect(() => {
+		const container = scrollRef.current;
+		if (!container) return;
+		const update = () => setHalfHeight(container.clientHeight / 2);
+		update();
+		const ro = new ResizeObserver(update);
+		ro.observe(container);
+		return () => ro.disconnect();
+	}, [scrollRef, fullLyrics]);
+
 	// 如果没有歌词，显示提示信息
 	if (!fullLyrics || fullLyrics.length === 0) {
 		return (
@@ -146,6 +160,8 @@ export function LyricsExtendedFull({
 				paddingBottom: 0,
 			}}
 		>
+			{/* 首尾占位空白（.lyrics-spacer 样式定义在 LyricsFull.css，全局生效） */}
+			<div className="lyrics-spacer" style={{ height: halfHeight }} aria-hidden="true" />
 			{fullLyrics.map((line, index) => (
 				<LineComponent
 					key={index}
@@ -161,6 +177,7 @@ export function LyricsExtendedFull({
 					}}
 				/>
 			))}
+			<div className="lyrics-spacer" style={{ height: halfHeight }} aria-hidden="true" />
 		</div>
 	);
 }

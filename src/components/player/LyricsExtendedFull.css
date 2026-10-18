@@ -27,15 +27,15 @@
 	scroll-behavior: smooth;
 	width: 100%;
 	height: 100%;
+	/* 与普通歌词视图（LyricsFull.css）一致：隐藏滚动条 */
+	scrollbar-width: none;
+	-ms-overflow-style: none;
 }
 
 .music-player .lyrics-extended-scroll::-webkit-scrollbar {
-	width: 4px;
-}
-
-.music-player .lyrics-extended-scroll::-webkit-scrollbar-thumb {
-	background: var(--text-faint);
-	border-radius: 2px;
+	display: none;
+	width: 0;
+	height: 0;
 }
 
 .music-player .lyrics-extended-line {

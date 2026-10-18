@@ -49,18 +49,10 @@ export function LyricsFull({
 	scrollRef,
 	lineRefs,
 }: LyricsFullProps) {
-	// 如果没有歌词，显示提示信息
-	// 空状态时不处理点击，让父级的 onClick 处理（切换到唱片页）
-	if (!fullLyrics || fullLyrics.length === 0) {
-		return (
-			<div className="lyrics lyrics-empty">
-				<span className="lyrics-empty-text">{t("playback.noLyrics")}</span>
-			</div>
-		);
-	}
-
 	// 在首/尾各放置一段等于容器可视高度一半的空白，使第一行与最后一行
 	// 都能滚动到容器正中央（否则首行贴顶、尾行贴底，无法居中）
+	// 注意：hooks 必须在提前 return 之前调用，避免歌词从空变非空时
+	// 触发 React "rendered fewer hooks than expected" 错误
 	const [halfHeight, setHalfHeight] = React.useState(0);
 	React.useLayoutEffect(() => {
 		const container = scrollRef.current;
@@ -71,6 +63,16 @@ export function LyricsFull({
 		ro.observe(container);
 		return () => ro.disconnect();
 	}, [scrollRef, fullLyrics]);
+
+	// 如果没有歌词，显示提示信息
+	// 空状态时不处理点击，让父级的 onClick 处理（切换到唱片页）
+	if (!fullLyrics || fullLyrics.length === 0) {
+		return (
+			<div className="lyrics lyrics-empty">
+				<span className="lyrics-empty-text">{t("playback.noLyrics")}</span>
+			</div>
+		);
+	}
 
 	return (
 		<div className="lyrics lyrics-scroll" ref={scrollRef}>
