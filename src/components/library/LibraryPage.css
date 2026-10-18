@@ -69,15 +69,6 @@
 		background-color 0.12s ease;
 }
 
-.music-player .library-tab:focus {
-	outline: none;
-}
-
-.music-player .library-tab:focus-visible {
-	outline: 2px solid var(--interactive-accent);
-	outline-offset: 2px;
-}
-
 .music-player .library-tab:hover {
 	/* opacity: 0.8; */
 	background: var(--background-modifier-hover);
