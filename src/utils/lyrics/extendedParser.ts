@@ -187,20 +187,5 @@ export class LyricsExtendedParser {
 		// 按时间排序，确保歌词按播放顺序排列
 		return lines.sort((a, b) => a.time - b.time);
 	}
-
-	/**
-	 * 清理逐字歌词文本中的时间标签，返回纯文本
-	 * 
-	 * @param text 包含时间标签的逐字歌词文本
-	 * @returns 返回清理后的纯文本歌词
-	 */
-	static cleanText(text: string): string {
-		return text
-			.replace(/\[\d+:\d+\.\d+\]/g, "") // 移除 [mm:ss.xx] 格式的时间标签
-			.replace(/\[\d+:\d+\]/g, "") // 移除 [mm:ss] 格式的时间标签
-			.replace(/<\d+:\d+\.\d+>/g, "") // 移除 <mm:ss.xx> 格式的时间标签
-			.replace(/<\d+:\d+>/g, "") // 移除 <mm:ss> 格式的时间标签
-			.trimEnd();
-	}
 }
 

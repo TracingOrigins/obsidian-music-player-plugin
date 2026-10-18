@@ -12,7 +12,6 @@ import type { ReactLibrarySnapshot, ReactPlaybackSnapshot, ReactTrackInfo } from
 import type { PlayMode } from "@/main";
 import type { LyricLine } from "@/utils/lyrics/parser";
 import type { ExtendedLyricLine } from "@/utils/lyrics/extendedParser";
-import { LyricsParser } from "@/utils/lyrics/parser";
 import { getTrackCover, type GetTrackCoverOptions } from "@/utils/library/coverFinder";
 import { calculateLyricsIndex } from "@/utils/lyrics/indexCalculator";
 import type { CurrentList, ListService } from "./ListService";
@@ -155,10 +154,10 @@ export class SnapshotService {
 			currentTime,
 		});
 
-		// 普通歌词的三行文本
-		const prevLyric = idx > 0 && !useExtendedLyrics ? LyricsParser.cleanText(currentLyrics[idx - 1]?.text ?? "") : "";
-		const currentLyric = idx >= 0 && !useExtendedLyrics ? LyricsParser.cleanText(currentLyrics[idx]?.text ?? "") : "";
-		const nextLyric = idx >= 0 && !useExtendedLyrics ? LyricsParser.cleanText(currentLyrics[idx + 1]?.text ?? "") : "";
+		// 普通歌词的三行文本（文本在 LyricsService 入库前已清理，直接取用）
+		const prevLyric = idx > 0 && !useExtendedLyrics ? currentLyrics[idx - 1]?.text ?? "" : "";
+		const currentLyric = idx >= 0 && !useExtendedLyrics ? currentLyrics[idx]?.text ?? "" : "";
+		const nextLyric = idx >= 0 && !useExtendedLyrics ? currentLyrics[idx + 1]?.text ?? "" : "";
 
 		// 逐字歌词的三行数据
 		const prevExtendedLyric = idx > 0 && useExtendedLyrics ? currentExtendedLyrics[idx - 1] : undefined;

@@ -186,10 +186,10 @@ function extractTextFromNativeTags(
 }
 
 /**
- * 提取内嵌歌词（与 music-metadata 最初推荐用法一致）：
+ * 提取内嵌歌词：
  * 1. `common.lyrics`（库已归并多来源，含 M4A、部分 MP3）
  * 2. 原生标签：id 含 lyrics、或 USLT / SYLT；TXXX 等配合 description 含 lyrics
- * 3. 再遍历原生标签，读取 USLT 的 `value.text`
+ *    （extractTextFromNativeTags 已覆盖 USLT 的 value.text，无需额外兜底）
  */
 function extractLyricsFromMetadata(metadata: IAudioMetadata): string | undefined {
 	const common = metadata.common.lyrics;
@@ -198,7 +198,7 @@ function extractLyricsFromMetadata(metadata: IAudioMetadata): string | undefined
 		if (joined.trim()) return joined;
 	}
 
-	const extractedLyrics = extractTextFromNativeTags(
+	return extractTextFromNativeTags(
 		metadata.native,
 		(id, upperId) => {
 			const isLyricsId = /lyrics/i.test(id);
@@ -207,26 +207,6 @@ function extractLyricsFromMetadata(metadata: IAudioMetadata): string | undefined
 		},
 		(desc) => /lyrics/i.test(desc)
 	);
-	if (extractedLyrics?.trim()) {
-		return extractedLyrics;
-	}
-
-	const native = metadata.native;
-	if (native) {
-		for (const format of Object.keys(native)) {
-			const nativeTags = native[format] || [];
-			for (const tag of nativeTags) {
-				const id = String(tag.id || "").toUpperCase();
-				const value: unknown = tag.value;
-				if (id === "USLT" && value && typeof (value as { text?: string }).text === "string") {
-					const t = (value as { text: string }).text;
-					if (t.trim()) return t;
-				}
-			}
-		}
-	}
-
-	return undefined;
 }
 
 /**

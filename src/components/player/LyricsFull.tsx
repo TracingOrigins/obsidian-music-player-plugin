@@ -11,7 +11,6 @@
 import React from "react";
 import "./LyricsFull.css";
 import type { LyricLine } from "@/utils/lyrics/parser";
-import { LyricsParser } from "@/utils/lyrics/parser";
 import { t } from "@/utils/i18n/i18n";
 
 /**
@@ -77,8 +76,8 @@ export function LyricsFull({
 		<div className="lyrics lyrics-scroll" ref={scrollRef}>
 			<div className="lyrics-spacer" style={{ height: halfHeight }} aria-hidden="true" />
 			{fullLyrics.map((line, index) => {
-				// 清理所有时间标签（包括卡拉OK标签），只显示纯歌词文本
-				const displayText = LyricsParser.cleanText(line.text);
+				// 文本在 LyricsService 入库前已清理（含杂括号），直接展示
+				const displayText = line.text;
 				const isActive = index === activeIndex;
 				const isPlaying = index === playingIndex;
 				const isPlayed = playingIndex >= 0 && index < playingIndex;
