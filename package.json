@@ -33,7 +33,7 @@
 		"eslint-plugin-obsidianmd": "^0.4.0",
 		"events": "^3.3.0",
 		"globals": "^17.6.0",
-		"music-metadata-browser": "^2.5.11",
+		"music-metadata": "^12.2.2",
 		"process": "^0.11.10",
 		"react": "^18.3.1",
 		"react-dom": "^18.3.1",
@@ -42,5 +42,15 @@
 	},
 	"dependencies": {
 		"obsidian": "latest"
+	},
+	"overrides": {
+		"moment": "^2.31.0",
+		"brace-expansion": "^2.1.7",
+		"fast-uri": "^3.1.8",
+		"js-yaml": "^5.5.0",
+		"file-type": "^22.2.0"
+	},
+	"allowScripts": {
+		"esbuild": true
 	}
 }

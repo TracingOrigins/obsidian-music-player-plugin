@@ -3,7 +3,7 @@
  * 
  * 从音频文件的二进制数据中提取嵌入的元数据信息，包括：
  * - 封面图片
- * - 歌词文本（与 music-metadata 一致：优先 **common.lyrics**，否则从原生标签中宽泛匹配 USLT/SYLT/LYRICS 等）
+ * - 歌词文本（优先原生标签中带时间戳的可同步歌词，否则回退 common.lyrics）
  * - 歌曲基本信息（标题、艺术家、专辑等）
  * - 音轨号和时长等
  * 
@@ -17,7 +17,7 @@ import { initBufferPolyfill } from "../polyfills/buffer";
 initBufferPolyfill();
 
 import { App, TFile } from "obsidian";
-import { IAudioMetadata, parseBuffer } from "music-metadata-browser";
+import { IAudioMetadata, parseBuffer } from "music-metadata";
 import { isSupportedAudioExtension } from "@/constants/audio";
 
 /**
@@ -146,7 +146,7 @@ function extractTextFromNativeTags(
 		for (const tag of nativeTags) {
 			const id = String(tag.id || "");
 			const upperId = id.toUpperCase();
-			const value: unknown = tag.value as unknown;
+			const value: unknown = tag.value;
 
 			const isMatched = idMatcher(id, upperId);
 			const desc = descriptionFromUnknown(value);
@@ -186,19 +186,31 @@ function extractTextFromNativeTags(
 }
 
 /**
+ * 从 common.lyrics 元素中提取文本。
+ *
+ * music-metadata 12 起元素为 { language, descriptor, text } 对象（由 USLT 等
+ * 汇总而来），更早版本为字符串，两种情况都要兼容。
+ */
+function lyricsEntryToText(entry: unknown): string {
+	if (typeof entry === "string") return entry;
+	if (entry !== null && typeof entry === "object" && "text" in entry) {
+		const text = (entry as { text?: unknown }).text;
+		if (typeof text === "string") return text;
+	}
+	return "";
+}
+
+/**
  * 提取内嵌歌词：
- * 1. `common.lyrics`（库已归并多来源，含 M4A、部分 MP3）
- * 2. 原生标签：id 含 lyrics、或 USLT / SYLT；TXXX 等配合 description 含 lyrics
- *    （extractTextFromNativeTags 已覆盖 USLT 的 value.text，无需额外兜底）
+ * 1. 原生标签：id 含 lyrics、或 USLT / SYLT；TXXX 等配合 description 含 lyrics
+ *    （extractTextFromNativeTags 内部会优先返回带时间戳、可同步的歌词）
+ * 2. 回退 common.lyrics（M4A 等只有汇总字段的格式）
+ *
+ * 原生优先不能反：v12 起 USLT 也会被汇总进 common.lyrics，若先取汇总字段，
+ * 纯文本会盖掉 TXXX:LYRICS 里的逐字时间戳歌词。
  */
 function extractLyricsFromMetadata(metadata: IAudioMetadata): string | undefined {
-	const common = metadata.common.lyrics;
-	if (common && Array.isArray(common) && common.length > 0) {
-		const joined = common.join("\n");
-		if (joined.trim()) return joined;
-	}
-
-	return extractTextFromNativeTags(
+	const fromNative = extractTextFromNativeTags(
 		metadata.native,
 		(id, upperId) => {
 			const isLyricsId = /lyrics/i.test(id);
@@ -207,6 +219,20 @@ function extractLyricsFromMetadata(metadata: IAudioMetadata): string | undefined
 		},
 		(desc) => /lyrics/i.test(desc)
 	);
+	if (fromNative?.trim()) {
+		return fromNative;
+	}
+
+	const common = metadata.common.lyrics;
+	if (common && Array.isArray(common) && common.length > 0) {
+		const joined = common
+			.map(lyricsEntryToText)
+			.filter((text) => text.trim() !== "")
+			.join("\n");
+		if (joined.trim()) return joined;
+	}
+
+	return undefined;
 }
 
 /**
@@ -285,7 +311,7 @@ export async function readAudioFileBinary(
  * 
  * 使用 music-metadata-browser 库解析音频文件，提取：
  * 1. 封面图片：转换为 Blob URL
- * 2. 歌词：优先 **common.lyrics**，否则从原生标签匹配（与 music-metadata 最初用法一致）
+ * 2. 歌词：优先从原生标签取可同步的时间戳歌词，否则回退 common.lyrics
  * 3. 基本信息：标题、艺术家、专辑、年份、流派、音轨号、时长等
  * 
  * @param buffer 音频文件的二进制数据（ArrayBuffer）
