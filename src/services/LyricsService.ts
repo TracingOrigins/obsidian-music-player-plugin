@@ -14,6 +14,7 @@ import { LyricLine, LyricsParser } from "@/utils/lyrics/parser";
 import { ExtendedLyricLine, LyricsExtendedParser } from "@/utils/lyrics/extendedParser";
 import { isTimestampedKaraokeLyrics } from "@/utils/lyrics/formatDetection";
 import { stripLeadingLyricsMetadata } from "@/utils/lyrics/normalizeLyrics";
+import { applyLyricsOffset, parseLyricsOffset, stripLyricsOffsetTags } from "@/utils/lyrics/offset";
 import MusicPlayerPlugin from "@/main";
 import { getOrCreateTrackId } from "@/utils/track/id";
 
@@ -54,7 +55,9 @@ export class LyricsService {
 			return { lyrics, extendedLyrics };
 		}
 
-		const lyricsText = stripLeadingLyricsMetadata(rawLyrics);
+		// [offset:±ms] 是歌词参数：解析后用于整体平移时间轴，但不显示在歌词中
+		const offsetSeconds = parseLyricsOffset(rawLyrics);
+		const lyricsText = stripLeadingLyricsMetadata(stripLyricsOffsetTags(rawLyrics));
 		if (!lyricsText.trim()) {
 			return { lyrics, extendedLyrics };
 		}
@@ -86,6 +89,9 @@ export class LyricsService {
 				);
 			}
 		}
+
+		// 应用偏移（正偏移 = 歌词整体提前）
+		applyLyricsOffset(lyrics, extendedLyrics, offsetSeconds);
 
 		return { lyrics, extendedLyrics };
 	}

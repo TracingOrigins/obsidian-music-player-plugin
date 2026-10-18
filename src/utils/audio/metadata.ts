@@ -8,6 +8,7 @@
  * - 音轨号和时长等
  * 
  * 注意：歌词从音频内嵌标签读取；优先使用库解析后的 common.lyrics，与最初实现一致。
+ * 同一 ID 的多个帧（标签工具拆分超长文本所致）会被合并，避免只读到第一帧。
  */
 
 // 为移动端提供 Buffer polyfill
@@ -20,11 +21,104 @@ import { IAudioMetadata, parseBuffer } from "music-metadata-browser";
 import { isSupportedAudioExtension } from "@/constants/audio";
 
 /**
- * 从原生标签中提取文本值的辅助函数
+ * 同一 (格式, 标签ID) 下收集到的多个歌词值。
+ */
+interface LyricsTagGroup {
+	/** 标签格式（如 ID3v2.3、vorbis） */
+	format: string;
+	/** 标签 ID（大写，如 TXXX:LYRICS） */
+	id: string;
+	/** 按文件顺序排列的值 */
+	chunks: string[];
+}
+
+/**
+ * 片段是否以新文档/新行开头（LRC 元数据标签或行时间标签）。
+ * 用于区分「被拆分的同一份歌词」与「独立写入的多个标签」。
+ */
+const LRC_DOC_START =
+	/^[\s\ufeff]*\[(?:(?:ar|ti|al|by|offset|hash|id|total|sign|qq|qr|author|auth|au|length|language|re|ve|edition|date|genre|encoder|coder|source|media|uploads|program|lrccreator)\s*:|\d{1,3}:\d{1,2}(?:\.\d{1,3})?\])/i;
+
+/**
+ * 合并同一标签 ID 的多个值。
+ *
+ * ID3v2.3 的 TXXX 帧在 music-metadata 中会被按 "/" 拆分：其
+ * FrameParser.splitValue 对 major < 4 的帧在值不含 NUL 时按 "/" 分割
+ * （ID3v2.3 对 TCOM/TEXT 等人名帧的分隔符规定，被误用到单值的 TXXX），
+ * "/" 作为分隔符被吃掉。用 "/" 重新拼接即可原样还原；片段若以新文档头
+ * （元数据或行时间标签）开头，则视为独立写入的多个标签，按换行合并。
+ *
+ * ID3v2.4 仅按 NUL 拆分，Vorbis / APE 等为真正的多值标签，按换行合并。
+ *
+ * @param format 标签格式（如 ID3v2.3）
+ * @param id 标签 ID（大写）
+ * @param chunks 按文件顺序排列的值
+ * @returns 合并后的完整文本
+ */
+function joinLyricFrameTexts(format: string, id: string, chunks: readonly string[]): string {
+	const slashSeparated = format === "ID3v2.3" && id.startsWith("TXXX");
+	let result = "";
+	for (const chunk of chunks) {
+		if (!chunk) continue;
+		if (result) {
+			result += slashSeparated && !LRC_DOC_START.test(chunk) ? "/" : "\n";
+		}
+		result += chunk;
+	}
+	return result;
+}
+
+/**
+ * 合并单个标签值中的多个子值（Vorbis / APE 等多值标签），按换行合并。
+ */
+function joinLyricValues(chunks: readonly string[]): string {
+	return chunks.filter((chunk) => chunk).join("\n");
+}
+
+/**
+ * 从单个标签值中提取歌词文本。
  * 
- * 遍历所有格式的原生标签，查找匹配的标签并提取文本值。
- * 支持多种值格式：字符串、对象的 text 属性（字符串或数组）。
+ * 支持多种值格式：字符串、字符串数组、对象的 text 属性（字符串或字符串数组）。
  * 
+ * @param value 标签值
+ * @returns 提取的文本，无法提取时返回 null
+ */
+function extractTagLyricsText(value: unknown): string | null {
+	// 格式1：直接是字符串
+	if (typeof value === "string") return value;
+	// 格式1b：字符串数组（部分 Vorbis / APE 标签的多值歌词）
+	if (
+		Array.isArray(value) &&
+		value.length > 0 &&
+		value.every((item: unknown) => typeof item === "string")
+	) {
+		return joinLyricValues(value);
+	}
+	// 格式2/3：对象中的 text 属性（字符串或字符串数组，如 USLT）
+	if (value !== null && typeof value === "object") {
+		const textProp = (value as { text?: unknown }).text;
+		if (typeof textProp === "string") return textProp;
+		if (
+			Array.isArray(textProp) &&
+			textProp.length > 0 &&
+			textProp.every((item: unknown) => typeof item === "string")
+		) {
+			return joinLyricValues(textProp);
+		}
+	}
+	return null;
+}
+
+/**
+ * 从原生标签中提取歌词文本（收集所有匹配的帧并按标签合并）。
+ *
+ * 同一 (格式, 标签ID) 出现多个值有两种成因：标签工具把超长文本拆成多个
+ * 同 ID 的帧，或 music-metadata 把 ID3v2.3 的 TXXX 值按 "/" 误拆成多个
+ * 标签（"/" 被吃掉）。只取第一帧会丢失后续歌词，因此按 (格式, 标签ID)
+ * 分组合并（见 joinLyricFrameTexts）。存在多个候选组时（如 TXXX:LYRICS
+ * 与 USLT 同时存在），优先选择带时间戳的歌词（可支持逐字/逐句同步），
+ * 其次选择内容更完整的一组。
+ *
  * @param native 原生标签对象
  * @param idMatcher 标签 ID 匹配函数，返回 true 表示匹配
  * @param descriptionMatcher 可选的描述匹配函数，用于额外匹配
@@ -43,7 +137,9 @@ function extractTextFromNativeTags(
 		return typeof d === "string" ? d : "";
 	};
 
-	// 遍历所有格式（ID3v2、Vorbis、APEv2 等）
+	// 按 (格式, 标签ID) 分组收集所有匹配的文本，保持文件中的出现顺序
+	const groups = new Map<string, LyricsTagGroup>();
+
 	for (const format of Object.keys(native)) {
 		const nativeTags = native[format] || [];
 		// 遍历该格式的所有标签
@@ -52,54 +148,41 @@ function extractTextFromNativeTags(
 			const upperId = id.toUpperCase();
 			const value: unknown = tag.value as unknown;
 
-			// 检查是否匹配
 			const isMatched = idMatcher(id, upperId);
-			if (!isMatched && descriptionMatcher) {
-				const desc = descriptionFromUnknown(value);
-				if (!descriptionMatcher(desc)) continue;
-			}
+			const desc = descriptionFromUnknown(value);
+			const matchesByDescription =
+				!isMatched && !!descriptionMatcher && desc !== "" && descriptionMatcher(desc);
+			if (!isMatched && !matchesByDescription) continue;
 
-			// 尝试从不同格式的标签值中提取文本
-			// 格式1：直接是字符串
-			if (typeof value === "string" && isMatched) {
-				return value;
-			}
-			// 格式1b：字符串数组（部分 Vorbis / APE 标签）
-			else if (
-				Array.isArray(value) &&
-				isMatched &&
-				value.length > 0 &&
-				value.every((item: unknown) => typeof item === "string")
-			) {
-				return value.join("\n");
-			}
-			// 格式2：对象中包含 text 属性（字符串）
-			else if (
-				value !== null &&
-				typeof value === "object" &&
-				typeof (value as { text?: unknown }).text === "string" &&
-				(isMatched ||
-					(descriptionMatcher && descriptionMatcher(descriptionFromUnknown(value))))
-			) {
-				return (value as { text: string }).text;
-			}
-			// 格式3：对象中包含 text 属性（数组）
-			else if (value !== null && typeof value === "object") {
-				const textProp = (value as { text?: unknown }).text;
-				if (
-					Array.isArray(textProp) &&
-					textProp.length > 0 &&
-					textProp.every((item): item is string => typeof item === "string") &&
-					(isMatched ||
-						(descriptionMatcher && descriptionMatcher(descriptionFromUnknown(value))))
-				) {
-					return textProp.join("\n");
-				}
+			const text = extractTagLyricsText(value);
+			if (text === null || text.trim() === "") continue;
+
+			const key = `${format}\u0000${upperId}`;
+			const existing = groups.get(key);
+			if (existing) {
+				existing.chunks.push(text);
+			} else {
+				groups.set(key, { format, id: upperId, chunks: [text] });
 			}
 		}
 	}
 
-	return undefined;
+	if (groups.size === 0) return undefined;
+
+	// 选择最佳候选组：优先带时间戳（可同步），其次内容更完整
+	let best: string | undefined;
+	let bestScore = -1;
+	for (const group of groups.values()) {
+		const joined = joinLyricFrameTexts(group.format, group.id, group.chunks);
+		const hasTimestamps = /\d{1,3}:\d{1,2}\.\d{1,3}/.test(joined);
+		const score = (hasTimestamps ? 1_000_000 : 0) + joined.length;
+		if (score > bestScore) {
+			bestScore = score;
+			best = joined;
+		}
+	}
+
+	return best;
 }
 
 /**
