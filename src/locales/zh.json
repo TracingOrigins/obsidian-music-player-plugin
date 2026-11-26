@@ -13,6 +13,8 @@
 	"settings.autoPlayTrack.name": "自动播放曲目",
 	"settings.autoPlayTrack.desc": "输入关键词搜索歌曲并点选；留空则从「全部」列表当前排序的第一首开始播放。",
 	"settings.autoPlayTrack.placeholder": "搜索歌曲…",
+	"settings.statusBarControls.name": "状态栏控制按钮",
+	"settings.statusBarControls.desc": "在状态栏显示「上一首 / 播放暂停 / 下一首」按钮。重启插件后生效。",
 	"view.title": "音乐播放器",
 	"view.initFailed": "音乐播放器初始化失败: {detail}",
 	"nav.search": "搜索",

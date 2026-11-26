@@ -66,6 +66,8 @@ export interface MusicPlayerSettings {
 	volume: number;
 	/** 持久化的播放速率（0.25-4.0），下次启动时恢复 */
 	playbackRate: number;
+	/** 是否在状态栏显示精简播放控制（上一首/播放暂停/下一首），默认 false */
+	showStatusBarControls: boolean;
 }
 
 /**
@@ -84,5 +86,6 @@ export const DEFAULT_SETTINGS: MusicPlayerSettings = {
 	autoPlayOpenTrackPath: '', // 默认：全部列表第一首
 	volume: 1.0,               // 默认音量 100%
 	playbackRate: 1.0,         // 默认正常速度
+	showStatusBarControls: false, // 默认不占用状态栏
 };
 

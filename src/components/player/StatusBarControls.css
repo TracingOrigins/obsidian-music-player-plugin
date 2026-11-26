@@ -1,0 +1,18 @@
+/**
+ * 状态栏精简播放控制按钮样式
+ *
+ * 按钮注册在 Obsidian 全局状态栏（不在 .music-player 容器内），
+ * 因此选择器不套 .music-player 前缀。
+ */
+
+.status-bar-item.music-player-status-bar-button {
+	cursor: pointer;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	opacity: 0.8;
+}
+
+.status-bar-item.music-player-status-bar-button:hover {
+	opacity: 1;
+}

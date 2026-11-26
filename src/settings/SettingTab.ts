@@ -44,6 +44,14 @@ export class MusicPlayerSettingTab extends PluginSettingTab {
 				},
 			},
 			{
+				name: t('settings.statusBarControls.name'),
+				desc: t('settings.statusBarControls.desc'),
+				control: {
+					key: 'showStatusBarControls',
+					type: 'toggle',
+				},
+			},
+			{
 				name: t('settings.autoPlayTrack.name'),
 				desc: t('settings.autoPlayTrack.desc'),
 				// 仅在开启“打开时自动播放”时显示

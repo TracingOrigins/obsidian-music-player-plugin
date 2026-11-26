@@ -13,7 +13,7 @@
 import { initBufferPolyfill } from "./utils/polyfills/buffer";
 initBufferPolyfill();
 
-import { Platform, Plugin } from 'obsidian';
+import { Platform, Plugin, setIcon } from 'obsidian';
 import { MusicPlayerView, VIEW_TYPE_MUSIC_PLAYER } from './views/MusicPlayerView';
 import { generateArtistsAndAlbums } from './utils/data/transform';
 import { getTrackPath } from './utils/track/id';
@@ -38,6 +38,10 @@ export type PlayMode = 'normal' | 'repeat-all' | 'repeat-one' | 'shuffle';
 export default class MusicPlayerPlugin extends Plugin {
 	/** 插件设置对象，存储所有配置和用户数据 */
 	declare settings: MusicPlayerSettings;
+	/** 状态栏播放/暂停按钮（用于同步图标） */
+	private statusBarPlayButton: HTMLElement | null = null;
+	/** 当前状态栏播放按钮显示的图标，避免重复 setIcon */
+	private statusBarPlayIconIsPause = false;
 
 	/**
 	 * 插件加载时的初始化方法
@@ -81,6 +85,77 @@ export default class MusicPlayerPlugin extends Plugin {
 
 		// 添加设置标签页（在 Obsidian 设置中显示）
 		this.addSettingTab(new MusicPlayerSettingTab(this.app, this));
+
+		// 状态栏精简控制按钮（设置开启时注册）
+		if (this.settings.showStatusBarControls) {
+			this.setupStatusBarControls();
+		}
+	}
+
+	/**
+	 * 在状态栏注册精简播放控制：上一首 / 播放暂停 / 下一首。
+	 * 按钮点击时若播放器视图未打开，先激活视图再执行操作。
+	 */
+	private setupStatusBarControls() {
+		const createButton = (icon: string, title: string, onClick: () => void) => {
+			const el = this.addStatusBarItem();
+			el.addClass("music-player-status-bar-button");
+			el.setAttribute("aria-label", title);
+			el.title = title;
+			setIcon(el, icon);
+			el.addEventListener("click", onClick);
+			return el;
+		};
+
+		createButton("lucide-skip-back", t("playback.prev"), () => {
+			void this.withPlayerView((view) => view.playPrevious());
+		});
+		this.statusBarPlayButton = createButton("lucide-play", t("playback.play"), () => {
+			void this.withPlayerView((view) => view.togglePlay());
+		});
+		createButton("lucide-skip-forward", t("playback.next"), () => {
+			void this.withPlayerView((view) => view.playNext());
+		});
+
+		// 定期同步播放/暂停图标（仅布尔值变化时更新 DOM）
+		this.registerInterval(
+			window.setInterval(() => this.syncStatusBarPlayIcon(), 300)
+		);
+	}
+
+	/**
+	 * 获取播放器视图；不存在时先激活视图再取。
+	 */
+	private async withPlayerView(action: (view: MusicPlayerView) => void | Promise<void>) {
+		let view = this.app.workspace.getLeavesOfType(VIEW_TYPE_MUSIC_PLAYER)[0]?.view as
+			| MusicPlayerView
+			| undefined;
+		if (!view) {
+			await this.activateView();
+			view = this.app.workspace.getLeavesOfType(VIEW_TYPE_MUSIC_PLAYER)[0]?.view as
+				| MusicPlayerView
+				| undefined;
+		}
+		if (view) {
+			await action(view);
+			this.syncStatusBarPlayIcon();
+		}
+	}
+
+	/**
+	 * 根据当前播放状态同步状态栏播放按钮图标。
+	 */
+	private syncStatusBarPlayIcon() {
+		if (!this.statusBarPlayButton) return;
+		const view = this.app.workspace.getLeavesOfType(VIEW_TYPE_MUSIC_PLAYER)[0]?.view as
+			| MusicPlayerView
+			| undefined;
+		const isPlaying = view?.isPlaying ?? false;
+		if (isPlaying === this.statusBarPlayIconIsPause) return;
+		this.statusBarPlayIconIsPause = isPlaying;
+		setIcon(this.statusBarPlayButton, isPlaying ? "lucide-pause" : "lucide-play");
+		this.statusBarPlayButton.setAttribute("aria-label", t(isPlaying ? "playback.pause" : "playback.play"));
+		this.statusBarPlayButton.title = t(isPlaying ? "playback.pause" : "playback.play");
 	}
 
 	/**

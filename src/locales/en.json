@@ -13,6 +13,8 @@
 	"settings.autoPlayTrack.name": "Autoplay track",
 	"settings.autoPlayTrack.desc": "Type to search and pick a track; leave empty to use the first track in the All list (current sort order).",
 	"settings.autoPlayTrack.placeholder": "Search tracks…",
+	"settings.statusBarControls.name": "Status bar controls",
+	"settings.statusBarControls.desc": "Show previous / play-pause / next buttons in the status bar. Takes effect after reloading the plugin.",
 	"view.title": "Music player",
 	"view.initFailed": "Music player failed to initialize: {detail}",
 	"nav.search": "Search",
