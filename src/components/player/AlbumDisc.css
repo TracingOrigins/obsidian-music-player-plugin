@@ -101,6 +101,17 @@
 	touch-action: pan-y;
 }
 
+/* 黑胶纹理 + 封面的共同旋转层：填满 300×300 的 album-container，
+   两个子层在其中居中，父层旋转时一起转 */
+.music-player .disc-rotator {
+	position: absolute;
+	inset: 0;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	transform-origin: center center;
+}
+
 .music-player .disc-background {
 	position: absolute;
 	width: 300px;

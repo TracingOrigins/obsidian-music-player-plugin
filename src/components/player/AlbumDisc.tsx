@@ -199,24 +199,27 @@ export function AlbumDisc({ coverUrl, trackKey, isPlaying, onPrev, onNext, onTog
 						willChange: isAnimating ? 'transform' : 'auto',
 					}}
 				>
-					{/* 黑胶唱片背景图片 */}
+					{/* 旋转层：黑胶纹理 + 封面一起转 */}
 					<div
-						role="img"
-						aria-label={t("a11y.vinyl")}
-						className="disc-background disc-background-embedded"
-					/>
-
-					{/* 专辑封面 */}
-					<div 
 						ref={currentDiscRef}
-						className={discClasses} 
-						style={{ ...discStyle, ...coverStyle }}
+						className="disc-rotator"
+						style={discStyle}
 					>
-						{!displayCoverUrl && (
-							<div className="album-placeholder">
-								♪
-							</div>
-						)}
+						{/* 黑胶唱片背景图片 */}
+						<div
+							role="img"
+							aria-label={t("a11y.vinyl")}
+							className="disc-background disc-background-embedded"
+						/>
+
+						{/* 专辑封面 */}
+						<div className={discClasses} style={coverStyle}>
+							{!displayCoverUrl && (
+								<div className="album-placeholder">
+									♪
+								</div>
+							)}
+						</div>
 					</div>
 				</div>
 
@@ -234,27 +237,28 @@ export function AlbumDisc({ coverUrl, trackKey, isPlaying, onPrev, onNext, onTog
 							willChange: shouldAnimate ? 'transform' : 'auto',
 						}}
 					>
-						{/* 黑胶唱片背景图片 */}
-						<div
-							role="img"
-							aria-label={t("a11y.vinyl")}
-							className="disc-background disc-background-embedded"
-						/>
+						{/* 旋转层：黑胶纹理 + 封面一起转（next 固定 0 度） */}
+						<div className="disc-rotator" style={{ transition: 'none', transform: 'rotate(0deg)' }}>
+							{/* 黑胶唱片背景图片 */}
+							<div
+								role="img"
+								aria-label={t("a11y.vinyl")}
+								className="disc-background disc-background-embedded"
+							/>
 
-						{/* 专辑封面 */}
-						<div 
-							className={discClasses}
-							style={{
-								transition: "none",
-								transform: 'rotate(0deg)',
-								backgroundImage: nextDiscCoverUrl ? `url("${nextDiscCoverUrl}")` : undefined,
-							}}
-						>
-							{!nextDiscCoverUrl && (
-								<div className="album-placeholder">
-									♪
-								</div>
-							)}
+							{/* 专辑封面 */}
+							<div 
+								className={discClasses}
+								style={{
+									backgroundImage: nextDiscCoverUrl ? `url("${nextDiscCoverUrl}")` : undefined,
+								}}
+							>
+								{!nextDiscCoverUrl && (
+									<div className="album-placeholder">
+										♪
+									</div>
+								)}
+							</div>
 						</div>
 					</div>
 				)}
