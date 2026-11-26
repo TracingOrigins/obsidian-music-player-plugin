@@ -17,8 +17,8 @@
     display: flex;
     align-items: flex-end;
     justify-content: center;
-    overflow: hidden;
-    min-height: 405px;
+	overflow: hidden;
+    min-height: 412px;
 	max-height: 450px;
     min-width: 320px;
 	margin-bottom: 32px;
@@ -70,6 +70,27 @@
 
 .music-player .needle.playing {
 	transform: translateX(-18px) rotate(0deg);
+}
+
+/* 唱针顶端支点阴影：与唱片圆环阴影同色，略大于支点形成柔和外扩。
+   圆心用 top/left + translate(-50%,-50%) 精确对齐 transform-origin (18px, 10px)，
+   旋转时阴影始终跟着支点；z-index:1 盖在唱针图片之上。 */
+.music-player .needle::before {
+	content: "";
+	position: absolute;
+	top: 10px;
+	left: 18px;
+	width: 28px;
+	height: 28px;
+	border-radius: 50%;
+	background: rgba(0, 0, 0, 0.03);
+	z-index: 1;
+	transform: translate(-50%, -50%);
+	pointer-events: none;
+}
+
+.theme-dark .music-player .needle::before {
+	background: rgba(255, 255, 255, 0.03);
 }
 
 .music-player .needle-image {
