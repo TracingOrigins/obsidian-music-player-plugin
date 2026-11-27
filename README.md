@@ -4,7 +4,7 @@
         <img src="https://img.shields.io/badge/dynamic/json?logo=obsidian&color=%23483699&label=downloads&query=%24%5B%22music-player%22%5D.downloads&url=https%3A%2F%2Fraw.githubusercontent.com%2Fobsidianmd%2Fobsidian-releases%2Fmaster%2Fcommunity-plugin-stats.json" alt="Obsidian Downloads">
         <img src="https://img.shields.io/github/downloads/TracingOrigins/obsidian-music-player-plugin/total?logo=github" alt="GitHub Downloads">
     </p>
-    <p>[<a href="https://github.com/TracingOrigins/obsidian-music-player-plugin/blob/master/README.zh.md">中文</a> | English]</p>
+    <p>[<a href="https://github.com/TracingOrigins/obsidian-music-player-plugin/blob/master/README.zh.md">中文</a> | English | <a href="https://github.com/TracingOrigins/obsidian-music-player-plugin/blob/master/README.ru.md">Русский</a>]</p>
     <p><a href="https://community.obsidian.md/plugins/music-player" target="_blank">Music Player</a> is an Obsidian sidebar plugin for playing local music files, combining local library management, lyrics display, playlists and favorites, and playback mode controls.</p>
 </div>
 
